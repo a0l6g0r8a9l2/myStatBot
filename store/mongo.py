@@ -1,15 +1,14 @@
-import asyncio
-import time
-from typing import List
 import logging
-from uuid import uuid4
+from typing import List
 
 import motor.motor_asyncio
 from pymongo.errors import PyMongoError
 
+from config import settings
+
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
-print(logger.level)
+logging.basicConfig(level=settings.logging_level,
+                    format="%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s")
 
 
 class MongodbService:
@@ -17,8 +16,8 @@ class MongodbService:
     Class for async CRUD document in Mongo
     """
 
-    def __init__(self, host: str = 'localhost', port: int = 27017,
-                 db: str = 'test_database', collection: str = 'test_collection'):
+    def __init__(self, host: str = settings.mongo_host, port: int = settings.mongo_port,
+                 db: str = settings.mongo_db_name, collection: str = settings.mongo_collection):
         self._client = motor.motor_asyncio.AsyncIOMotorClient(host, port)
         self._db = self._client[db]
         self._collection = self._db[collection]
@@ -58,29 +57,3 @@ class MongodbService:
 
     def __repr__(self):
         return f'DB: {self._db.name} Collection: {self._collection.name}'
-
-
-"""
-USAGE
-"""
-
-
-async def main():
-    storage = MongodbService(db='tst_db', collection='tst_collection_2')
-    logging.debug(storage)
-
-    created_docs = []
-    for i in range(5):
-        dto = {
-            "_id": str(uuid4()),
-            "payload": str(uuid4()),
-            "field2": str(int(time.time()))
-        }
-        result = await storage.create_one(dto)
-        logging.debug(f'Created doc with id: {result}')
-        created_docs.append(result)
-
-
-if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())

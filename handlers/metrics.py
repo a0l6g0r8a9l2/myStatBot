@@ -8,15 +8,18 @@ from enum import Enum
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from store.services import add_metric, fetch_all_metrics, add_value_by_metric, fetch_all_metric_and_values
+from config import settings
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=settings.logging_level,
+                    format="%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s")
 
 
 async def send_welcome(message: types.Message):
     """
     This handler will be called when user sends `/start` or `/help` command
     """
-    await message.reply("Hi!\nI'm EchoBot!\nPowered by aiogram.")
+    await message.reply("Привет, это бот для сбора статистики!")
 
 
 async def add_value(message: types.Message):
@@ -101,7 +104,6 @@ async def waiting_for_metric_name(message: types.Message, state: FSMContext):
     await state.update_data(metric_name=message.text, user_id=message.from_user.id)
     actions_keyboard = InlineKeyboardMarkup(row_width=3)
     actions_keyboard.row(*[InlineKeyboardButton(i, callback_data=i) for i in MetricTypes.list()])
-    # todo: добавить проверку наличия метрики перед добавлением
     user_metrics = await fetch_all_metrics(message.from_user.id)
     if not user_metrics or (message.text in user_metrics):
         await message.answer(f"Ok, метрика <u>{message.text}</u>. Давай выберем тип:",

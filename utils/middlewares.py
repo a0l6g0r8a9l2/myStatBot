@@ -11,6 +11,6 @@ class AccessMiddleware(BaseMiddleware):
 
     async def on_process_message(self, message: types.Message, _):
         if int(message.from_user.id) != int(self.access_id):
-            msg_body = 'This is beta bot'
+            msg_body = 'Access denied! This is private Bot (for now).'
             await message.answer(msg_body, parse_mode="Markdown")
             raise CancelHandler()

@@ -8,10 +8,12 @@ from aiogram.types import BotCommand
 from aiogram.utils.exceptions import TelegramAPIError
 
 from handlers.metrics import register_handlers_welcome
-from utils import settings
+from config import settings
 from utils.middlewares import AccessMiddleware
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=settings.logging_level,
+                    format="%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s")
 
 
 async def set_commands(tg_bot: Bot):
@@ -24,9 +26,6 @@ async def set_commands(tg_bot: Bot):
 
 
 API_TOKEN = settings.telegram_token
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
 
 
 async def main():

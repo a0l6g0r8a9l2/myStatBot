@@ -1,10 +1,12 @@
 import datetime
 import logging
 
+from config import settings
 from .mongo import MongodbService
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=settings.logging_level,
+                    format="%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s")
 
 
 async def add_metric(name: str, hashtag: str, metric_type: str, user_id: str):
