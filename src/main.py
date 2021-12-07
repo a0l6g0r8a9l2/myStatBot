@@ -7,9 +7,9 @@ from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.types import BotCommand
 from aiogram.utils.exceptions import TelegramAPIError
 
-from handlers.metrics import register_handlers_welcome
+from src.handlers.metrics import register_handlers_welcome
 from config import settings
-from utils.middlewares import AccessMiddleware
+from src.utils.middlewares import AccessMiddleware
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=settings.logging_level,

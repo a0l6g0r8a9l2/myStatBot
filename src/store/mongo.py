@@ -4,7 +4,7 @@ from typing import List
 import motor.motor_asyncio
 from pymongo.errors import PyMongoError
 
-from config import settings
+from src.config import settings
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=settings.logging_level,

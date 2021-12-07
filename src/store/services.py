@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from config import settings
+from src.config import settings
 from .mongo import MongodbService
 
 logger = logging.getLogger(__name__)

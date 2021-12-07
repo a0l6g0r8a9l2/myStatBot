@@ -1,0 +1,29 @@
+version: "3.7"
+
+volumes:
+  mongodb_volume:
+
+services:
+
+  bot:
+    build: ./src
+    container_name: stat-bot
+    restart: always
+    environment:
+      - TZ=Europe/Moscow
+      - BOT_ENV=PROD
+      - TIME_OUT=4
+      - MONGO_DB_NAME=statistic
+      - MONGO_COLLECTION=metrics
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - TELEGRAM_TOKEN
+      - TELEGRAM_CHAT_ID
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:latest
+    volumes:
+     - mongodb_volume:/data/db
+    restart: always

@@ -1,6 +1,6 @@
 FROM python:3.9
-COPY . /app/bot
-WORKDIR /app/bot
+COPY . /app/src
+WORKDIR /app/src
 RUN pip install -U setuptools pip
 RUN pip install -r requirements.txt
 ENV PYTHONPATH "${PYTHONPATH}/app"

@@ -7,8 +7,8 @@ from enum import Enum
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from store.services import add_metric, fetch_all_metrics, add_value_by_metric, fetch_all_metric_and_values
-from config import settings
+from src.store.services import add_metric, fetch_all_metrics, add_value_by_metric, fetch_all_metric_and_values
+from src.config import settings
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=settings.logging_level,
