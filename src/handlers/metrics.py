@@ -105,7 +105,7 @@ async def waiting_for_metric_name(message: types.Message, state: FSMContext):
     actions_keyboard = InlineKeyboardMarkup(row_width=3)
     actions_keyboard.row(*[InlineKeyboardButton(i, callback_data=i) for i in MetricTypes.list()])
     user_metrics = await fetch_all_metrics(message.from_user.id)
-    if not user_metrics or (message.text not in user_metrics):
+    if (user_metrics is None) or (message.text not in user_metrics):
         await message.answer(f"Ok, метрика <u>{message.text}</u>. Давай выберем тип:",
                              reply_markup=actions_keyboard, parse_mode="HTML")
         await AddMetric.waiting_for_type.set()
