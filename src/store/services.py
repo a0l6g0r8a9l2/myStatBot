@@ -11,7 +11,10 @@ logging.basicConfig(level=settings.logging_level,
 
 async def add_metric(name: str, hashtag: str, metric_type: str, user_id: str):
     db = MongodbService(collection='user_metrics')
-    await db.create_one({'name': name, 'hashtag': hashtag, 'metric_type': metric_type, 'user_id': user_id})
+    await db.create_one({'name': name,
+                         'hashtag': hashtag,
+                         'metric_type': metric_type,
+                         'user_id': user_id})
 
 
 async def add_value_by_metric(value: str, hashtag: str, user_id: str):
