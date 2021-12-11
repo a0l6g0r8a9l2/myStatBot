@@ -1,4 +1,5 @@
 import logging
+import datetime
 
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
@@ -30,10 +31,14 @@ async def add_value(message: types.Message):
     if message.text.startswith('#'):
         try:
             _message = message.text.lower()[1:]
-            tag, value = _message.split()
             user_metrics = await fetch_all_metrics(message.from_user.id)
-            if user_metrics and (tag in user_metrics):
-                await add_value_by_metric(value=value, hashtag=tag, user_id=message.from_user.id)
+            if len(_message.split()) == 3:
+                name, value, comment = _message.split()
+            else:
+                name, value = _message.split()
+                comment = None
+            if user_metrics and (name in user_metrics):
+                await add_value_by_metric(value=value, hashtag=name, user_id=message.from_user.id, comment=comment)
                 await message.reply('Готово')
             else:
                 await message.reply('Не нашел метрику')
@@ -51,8 +56,14 @@ async def get_all_metric_values(message: types.Message):
     metrics_values = await fetch_all_metric_and_values(message.from_user.id)
     if metrics_values:
         msg = 'Метрика, Значение, Дата' + '\n'
-        for m in metrics_values:
-            msg += f'{m[0]}, {m[1]}, {m[2]}' + '\n'
+        for row in metrics_values:
+            for i, value in enumerate(row):
+                if not value:
+                    value = '-'
+                elif i == 2:
+                    value = datetime.datetime.fromisoformat(value).strftime("%d.%m.%Y %H:%M")
+                msg += value + ', '
+            msg += '\n'
         await message.reply(msg)
     else:
         await message.reply('Не найдено ни однного значения метрик')
@@ -130,7 +141,7 @@ async def waiting_for_metric_type(callback_query: types.CallbackQuery, state: FS
         )
         await callback_query.message.answer(f'Готово! '
                                             f'Теперь можешь добалять значение метрики по '
-                                            f'#{str(metric.get("metric_name")).replace(" ", "_")} <значение>')
+                                            f'#{str(metric.get("metric_name")).replace(" ", "_")} значение комментарий')
         await state.finish()
     else:
         await callback_query.message.answer(f'Такой тип не поддерживатеся.')
