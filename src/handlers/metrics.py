@@ -55,7 +55,7 @@ async def get_all_metric_values(message: types.Message):
     logging.debug(f'Log from {__name__}: {message.text}')
     metrics_values = await fetch_all_metric_and_values(message.from_user.id)
     if metrics_values:
-        msg = 'Метрика, Значение, Дата' + '\n'
+        msg = 'Метрика, Значение, Дата, Комментарий' + '\n'
         for row in metrics_values:
             for i, value in enumerate(row):
                 if not value:
