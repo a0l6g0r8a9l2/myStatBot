@@ -32,7 +32,7 @@ async def add_value(message: types.Message):
         try:
             _message = message.text.lower()[1:]
             user_metrics = await fetch_all_metrics(message.from_user.id)
-            if len(_message.split()) == 3:
+            if len(_message.split()) >= 3:
                 name, value, comment = _message.split()
             else:
                 name, value = _message.split()
