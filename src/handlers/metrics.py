@@ -146,13 +146,3 @@ async def waiting_for_metric_type(callback_query: types.CallbackQuery, state: FS
         await state.finish()
     else:
         await callback_query.message.answer(f'Такой тип не поддерживатеся.')
-
-
-def register_metric_handlers(dp: Dispatcher):
-    dp.register_message_handler(send_welcome, commands=['start', 'help'], state='*')
-    dp.register_message_handler(add_value, regexp='^#(\w+|\d)', state='*')
-    dp.register_message_handler(get_all_metric_values, commands=['get_metrics_and_values'], state='*')
-    dp.register_message_handler(get_all_metrics, commands=['get_metrics'], state='*')
-    dp.register_message_handler(new_metric, commands=['new_metric'], state='*')
-    dp.register_message_handler(waiting_for_metric_name, state=AddMetric.waiting_for_name, regexp='^[\w+]\w+')
-    dp.register_callback_query_handler(waiting_for_metric_type, state=AddMetric.waiting_for_type)

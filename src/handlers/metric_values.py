@@ -33,7 +33,7 @@ async def new_value_to_metric(message: types.Message):
     await AddMetricValue.waiting_for_metric_name.set()
 
 
-async def waiting_for_metric_name(callback_query: types.CallbackQuery, state: FSMContext):
+async def waiting_for_name_of_metric(callback_query: types.CallbackQuery, state: FSMContext):
     logging.debug(f'Log from {__name__}: {callback_query.data}')
     user_metrics = await fetch_all_metrics_names(user_id=callback_query.from_user.id)
     if callback_query.data in user_metrics:
@@ -88,12 +88,3 @@ async def waiting_for_metric_value_comment(message: types.Message, state: FSMCon
     await message.answer(f'👍')
     await state.finish()
 
-
-def register_values_handlers(dp: Dispatcher):
-    dp.register_message_handler(new_value_to_metric, commands=['add_value'], state='*')
-    dp.register_callback_query_handler(waiting_for_metric_name,
-                                       state=AddMetricValue.waiting_for_metric_name)
-    dp.register_message_handler(waiting_for_metric_value,
-                                state=AddMetricValue.waiting_for_metric_value)
-    dp.register_message_handler(waiting_for_metric_value_comment,
-                                state=AddMetricValue.waiting_for_metric_value_comment)
