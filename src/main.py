@@ -7,8 +7,7 @@ from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.types import BotCommand
 from aiogram.utils.exceptions import TelegramAPIError
 
-from handlers.metric_values import register_values_handlers
-from src.handlers.metrics import register_metric_handlers
+from handlers import register_handlers
 from config import settings
 from src.utils.middlewares import AccessMiddleware
 
@@ -35,8 +34,7 @@ async def main():
     dp = Dispatcher(bot, storage=MemoryStorage())
     dp.middleware.setup(LoggingMiddleware())
     dp.middleware.setup(AccessMiddleware(settings.telegram_chat_id))
-    register_metric_handlers(dp)
-    register_values_handlers(dp)
+    register_handlers(dp)
     await set_commands(bot)
     try:
         await dp.start_polling()
