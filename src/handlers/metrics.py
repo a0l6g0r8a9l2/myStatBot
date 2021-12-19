@@ -8,7 +8,7 @@ from enum import Enum
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from src.store.services import add_metric, fetch_all_metrics, add_value_by_metric, fetch_all_metric_and_values
+from src.store.services import add_metric, fetch_all_metrics_names, add_value_by_metric, fetch_all_metric_and_values
 from src.config import settings
 
 logger = logging.getLogger(__name__)
@@ -31,15 +31,15 @@ async def add_value(message: types.Message):
     if message.text.startswith('#'):
         try:
             _message = message.text.lower()[1:]
-            user_metrics = await fetch_all_metrics(message.from_user.id)
+            user_metrics = await fetch_all_metrics_names(message.from_user.id)
             if len(_message.split()) >= 3:
                 name, value, comment = _message.split()
             else:
                 name, value = _message.split()
                 comment = None
             if user_metrics and (name in user_metrics):
-                await add_value_by_metric(value=value, hashtag=name, user_id=message.from_user.id, comment=comment)
-                await message.reply('Готово')
+                await add_value_by_metric(value=value, hashtag=name, name=name, user_id=message.from_user.id, comment=comment)
+                await message.reply('👍')
             else:
                 await message.reply('Не нашел метрику')
         except ValueError:
@@ -58,6 +58,7 @@ async def get_all_metric_values(message: types.Message):
         msg = 'Метрика, Значение, Дата, Комментарий' + '\n'
         for row in metrics_values:
             for i, value in enumerate(row):
+                logger.debug(f'Номер значения {i}, значение {value}')
                 if not value:
                     value = '-'
                 elif i == 2:
@@ -74,7 +75,7 @@ async def get_all_metrics(message: types.Message):
     This handler will be called when user sends `/get_all_metrics` command
     """
     logging.debug(f'Log from {__name__}: {message.text}')
-    metrics = await fetch_all_metrics(user_id=message.from_user.id)
+    metrics = await fetch_all_metrics_names(user_id=message.from_user.id)
     if metrics:
         msg = ''
         for metric in metrics:
@@ -115,7 +116,7 @@ async def waiting_for_metric_name(message: types.Message, state: FSMContext):
     await state.update_data(metric_name=message.text.lower(), user_id=message.from_user.id)
     actions_keyboard = InlineKeyboardMarkup(row_width=3)
     actions_keyboard.row(*[InlineKeyboardButton(i, callback_data=i) for i in MetricTypes.list()])
-    user_metrics = await fetch_all_metrics(message.from_user.id)
+    user_metrics = await fetch_all_metrics_names(message.from_user.id)
     if (user_metrics is None) or (message.text.lower() not in user_metrics):
         await message.answer(f"Ok, метрика <u>{message.text.lower()}</u>. Давай выберем тип:",
                              reply_markup=actions_keyboard, parse_mode="HTML")
@@ -139,7 +140,7 @@ async def waiting_for_metric_type(callback_query: types.CallbackQuery, state: FS
             metric_type=metric.get('metric_type'),
             user_id=metric.get('user_id')
         )
-        await callback_query.message.answer(f'Готово! '
+        await callback_query.message.answer(f'👍\n'
                                             f'Теперь можешь добалять значение метрики по '
                                             f'#{str(metric.get("metric_name")).replace(" ", "_")} значение комментарий')
         await state.finish()
@@ -147,7 +148,7 @@ async def waiting_for_metric_type(callback_query: types.CallbackQuery, state: FS
         await callback_query.message.answer(f'Такой тип не поддерживатеся.')
 
 
-def register_handlers(dp: Dispatcher):
+def register_metric_handlers(dp: Dispatcher):
     dp.register_message_handler(send_welcome, commands=['start', 'help'], state='*')
     dp.register_message_handler(add_value, regexp='^#(\w+|\d)', state='*')
     dp.register_message_handler(get_all_metric_values, commands=['get_metrics_and_values'], state='*')
