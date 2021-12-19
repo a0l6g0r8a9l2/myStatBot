@@ -69,10 +69,10 @@ async def waiting_for_metric_value(message: types.Message, state: FSMContext):
                              f'Добавь комментарий или нажми "Закончить"', reply_markup=actions_keyboard)
         await AddMetricValue.waiting_for_metric_value_comment.set()
     else:
-        msg = f'Значение должно быть числовым!\n'
-        msg += f'- 1-5 - если метрика {MetricTypes.relative}\n'
-        msg += f'- любое натуральное число - если метрика {MetricTypes.absolute}'
-        await message.answer(msg)
+        msg = f'<b>Значение должно быть числовым!</b>\n'
+        msg += f'- от <b>1 до 5</b>, если метрика {MetricTypes.relative.value}\n'
+        msg += f'- <b>неотрицательное число</b>, если метрика {MetricTypes.absolute.value}'
+        await message.answer(msg, parse_mode='HTML')
 
 
 async def waiting_for_metric_value_comment(message: types.Message, state: FSMContext):
@@ -85,7 +85,7 @@ async def waiting_for_metric_value_comment(message: types.Message, state: FSMCon
                               name=metric_data.get('metric_name'),
                               user_id=message.from_user.id,
                               comment=metric_data.get('comment', '-'))
-    await message.answer(f'Готово')
+    await message.answer(f'👍')
     await state.finish()
 
 

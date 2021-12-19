@@ -39,7 +39,7 @@ async def add_value(message: types.Message):
                 comment = None
             if user_metrics and (name in user_metrics):
                 await add_value_by_metric(value=value, hashtag=name, name=name, user_id=message.from_user.id, comment=comment)
-                await message.reply('Готово')
+                await message.reply('👍')
             else:
                 await message.reply('Не нашел метрику')
         except ValueError:
@@ -140,7 +140,7 @@ async def waiting_for_metric_type(callback_query: types.CallbackQuery, state: FS
             metric_type=metric.get('metric_type'),
             user_id=metric.get('user_id')
         )
-        await callback_query.message.answer(f'Готово! '
+        await callback_query.message.answer(f'👍\n'
                                             f'Теперь можешь добалять значение метрики по '
                                             f'#{str(metric.get("metric_name")).replace(" ", "_")} значение комментарий')
         await state.finish()
