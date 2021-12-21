@@ -47,9 +47,9 @@ async def waiting_for_name_of_metric(callback_query: types.CallbackQuery, state:
                                             reply_markup=actions_keyboard)
         await AddMetricValue.waiting_for_metric_value.set()
     else:
-        await callback_query.message.reply('Такой метрики не найдено!\n'
+        await callback_query.message.reply('<b>Такой метрики не найдено!</b>\n'
                                            'Выберите из списка метрик (/get_all_metrics) или\n '
-                                           'создайте новую (/new_metric)')
+                                           'создайте новую (/new_metric)', parse_mode='HTML')
         await state.finish()
 
 
@@ -59,8 +59,10 @@ async def waiting_for_metric_value(message: types.Message, state: FSMContext):
         actions_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         actions_keyboard.add(KeyboardButton('Закончить'))
         await state.update_data(metric_value=message.text)
-        await message.answer(f'Ок, значение {message.text}.\n'
-                             f'Добавь комментарий или нажми "Закончить"', reply_markup=actions_keyboard)
+        await message.answer(f'Ок, значение <b>{message.text}</b>.\n'
+                             f'Добавь комментарий или нажми <b>"Закончить"</b>',
+                             reply_markup=actions_keyboard,
+                             parse_mode='HTML')
         await AddMetricValue.waiting_for_metric_value_comment.set()
     else:
         msg = f'<b>Значение должно быть числовым!</b>\n'

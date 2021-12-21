@@ -117,7 +117,7 @@ async def waiting_for_metric_name(message: types.Message, state: FSMContext):
                              reply_markup=actions_keyboard, parse_mode="HTML")
         await AddMetric.waiting_for_type.set()
     else:
-        await message.answer(f'Метрика {message.text.lower()} уже существует!')
+        await message.answer(f'Метрика <b>{message.text.lower()}</b> уже существует!', parse_mode='HTML')
         await state.finish()
 
 
