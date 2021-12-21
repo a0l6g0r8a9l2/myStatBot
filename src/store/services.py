@@ -2,14 +2,11 @@ import datetime
 import logging
 from typing import Optional
 
-from src.config import settings
+from utils import log_it, default_logger
 from .mongo import MongodbService
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=settings.logging_level,
-                    format="%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s")
 
-
+@log_it(logger=default_logger)
 async def add_metric(name: str, hashtag: str, metric_type: str, user_id: str):
     db = MongodbService(collection='user_metrics')
     await db.create_one({'name': name,
@@ -18,6 +15,7 @@ async def add_metric(name: str, hashtag: str, metric_type: str, user_id: str):
                          'user_id': user_id})
 
 
+@log_it(logger=default_logger)
 async def add_value_by_metric(value: str, hashtag: str, name: str, user_id: str, comment: Optional[str] = None):
     db = MongodbService(collection='user_metric_values')
     await db.create_one(
@@ -30,6 +28,7 @@ async def add_value_by_metric(value: str, hashtag: str, name: str, user_id: str,
     )
 
 
+@log_it(logger=default_logger)
 async def fetch_all_metrics_names(user_id: str):
     db = MongodbService(collection='user_metrics')
     user_metrics = await db.find(user_id)
@@ -39,6 +38,7 @@ async def fetch_all_metrics_names(user_id: str):
         return
 
 
+@log_it(logger=default_logger)
 async def fetch_user_metric_type(user_id: str, metric_name: str) -> Optional[str]:
     try:
         db = MongodbService(collection='user_metrics')
@@ -48,10 +48,11 @@ async def fetch_user_metric_type(user_id: str, metric_name: str) -> Optional[str
         logging.debug(f'Log from {__name__} fetch_user_metric_type: {metric_type}')
         return metric_type
     except (TypeError, ValueError) as err:
-        logger.error(f'Ошибка поиска типа метрики! {err}')
+        default_logger.error(f'Ошибка поиска типа метрики! {err}')
         return None
 
 
+@log_it(logger=default_logger)
 async def fetch_all_metric_and_values(user_id: str):
     db = MongodbService(collection='user_metric_values')
     user_metrics_values = await db.find(user_id)
@@ -61,6 +62,7 @@ async def fetch_all_metric_and_values(user_id: str):
         return
 
 
+@log_it(logger=default_logger)
 async def fetch_values_user_metric(user_id: str, metric_name: str) -> Optional[list[str]]:
     db = MongodbService(collection='user_metric_values')
     user_metrics_values = await db.find(user_id)

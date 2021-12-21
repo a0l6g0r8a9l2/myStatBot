@@ -1,18 +1,12 @@
-import logging
-
-from aiogram import types, Dispatcher
+from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
 from handlers.metrics import MetricTypes
-from src.config import settings
 from src.store.services import fetch_all_metrics_names, fetch_user_metric_type, \
     fetch_values_user_metric, add_value_by_metric
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=settings.logging_level,
-                    format="%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s")
+from utils import default_logger, log_it
 
 
 class AddMetricValue(StatesGroup):
@@ -21,11 +15,11 @@ class AddMetricValue(StatesGroup):
     waiting_for_metric_value_comment = State()
 
 
+@log_it(logger=default_logger)
 async def new_value_to_metric(message: types.Message):
     """
     This handler will be called when user sends `/add_value` command
     """
-    logging.debug(f'Log from {__name__}: {message.text}')
     user_metrics = await fetch_all_metrics_names(user_id=message.from_user.id)
     actions_keyboard = InlineKeyboardMarkup(row_width=3)
     actions_keyboard.add(*[InlineKeyboardButton(i, callback_data=i) for i in user_metrics])
@@ -33,8 +27,8 @@ async def new_value_to_metric(message: types.Message):
     await AddMetricValue.waiting_for_metric_name.set()
 
 
+@log_it(logger=default_logger)
 async def waiting_for_name_of_metric(callback_query: types.CallbackQuery, state: FSMContext):
-    logging.debug(f'Log from {__name__}: {callback_query.data}')
     user_metrics = await fetch_all_metrics_names(user_id=callback_query.from_user.id)
     if callback_query.data in user_metrics:
         await state.update_data(metric_name=callback_query.data)
@@ -59,8 +53,8 @@ async def waiting_for_name_of_metric(callback_query: types.CallbackQuery, state:
         await state.finish()
 
 
+@log_it(logger=default_logger)
 async def waiting_for_metric_value(message: types.Message, state: FSMContext):
-    logging.debug(f'Log from {__name__} : {message.text}')
     if message.text.isdigit():
         actions_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         actions_keyboard.add(KeyboardButton('Закончить'))
@@ -75,8 +69,8 @@ async def waiting_for_metric_value(message: types.Message, state: FSMContext):
         await message.answer(msg, parse_mode='HTML')
 
 
+@log_it(logger=default_logger)
 async def waiting_for_metric_value_comment(message: types.Message, state: FSMContext):
-    logging.debug(f'Log from {__name__}: {message.text}')
     metric_data = await state.get_data()
     if message.text != 'Закончить':
         await state.update_data(comment=message.text)

@@ -1,5 +1,4 @@
 import asyncio
-import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -7,13 +6,10 @@ from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.types import BotCommand
 from aiogram.utils.exceptions import TelegramAPIError
 
-from handlers import register_handlers
 from config import settings
+from handlers import register_handlers
 from src.utils.middlewares import AccessMiddleware
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=settings.logging_level,
-                    format="%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s")
+from utils import default_logger
 
 
 async def set_commands(tg_bot: Bot):
@@ -46,6 +42,6 @@ if __name__ == '__main__':
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logging.info(f'Buy!')
+        default_logger.info(f'Buy!')
     except TelegramAPIError as err:
-        logging.error(f'Handling error: {err.args}')
+        default_logger.error(f'Handling error: {err.args}')

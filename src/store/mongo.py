@@ -5,10 +5,7 @@ import motor.motor_asyncio
 from pymongo.errors import PyMongoError
 
 from src.config import settings
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=settings.logging_level,
-                    format="%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s")
+from utils import default_logger, log_it
 
 
 class MongodbService:
@@ -22,6 +19,7 @@ class MongodbService:
         self._db = self._client[db]
         self._collection = self._db[collection]
 
+    @log_it(logger=default_logger)
     async def create_one(self, dto) -> str:
         """
         Create document in Mongo
@@ -32,11 +30,12 @@ class MongodbService:
         try:
             async with await self._client.start_session() as s:
                 result = await self._collection.insert_one(dto, session=s)
-                logger.debug(result.inserted_id)
+                default_logger.debug(result.inserted_id)
                 return result.inserted_id
         except PyMongoError as err:
-            logging.error(err.args)
+            default_logger.error(err.args)
 
+    @log_it(logger=default_logger)
     async def find(self, value: str, key: str = 'user_id') -> List[dict]:
         """
         Find document in Mongo
@@ -50,10 +49,10 @@ class MongodbService:
             async with await self._client.start_session() as s:
                 async for doc in self._collection.find({key: {"$eq": value}}, session=s):
                     result.append(doc)
-                logger.debug(result)
+                default_logger.debug(result)
                 return result
         except PyMongoError as err:
-            logging.error(err.args)
+            default_logger.error(err.args)
 
     def __repr__(self):
         return f'DB: {self._db.name} Collection: {self._collection.name}'
