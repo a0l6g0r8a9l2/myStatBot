@@ -8,7 +8,7 @@ from config import settings
 
 def get_logger() -> logging.Logger:
     """
-    Default default_logger
+    Default logger
     :return: logging.Logger
     """
     logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ def get_logger() -> logging.Logger:
 default_logger = get_logger()
 
 
-def log_it(logger: logging.Logger = get_logger()):
+def log_it(logger: logging.Logger = default_logger):
     def log_it_outer(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
