@@ -73,9 +73,9 @@ async def waiting_for_metric_value(message: types.Message, state: FSMContext):
 
 @log_it(logger=default_logger)
 async def waiting_for_metric_value_comment(message: types.Message, state: FSMContext):
-    metric_data = await state.get_data()
     if message.text != 'Закончить':
         await state.update_data(comment=message.text)
+    metric_data = await state.get_data()
     await add_value_by_metric(value=metric_data.get('metric_value'),
                               hashtag=metric_data.get('metric_name'),
                               name=metric_data.get('metric_name'),
