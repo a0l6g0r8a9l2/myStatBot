@@ -5,8 +5,10 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InputFile
 
-from src.store.services import add_metric, fetch_all_metrics_names, add_value_by_metric, fetch_all_metric_and_values
+from src.store.services import add_metric, fetch_all_metrics_names, add_value_by_metric, fetch_all_metric_and_values, \
+    prepare_file_to_export, remove_file
 from utils import default_logger, log_it
 
 
@@ -25,7 +27,7 @@ async def add_value(message: types.Message):
     if message.text.startswith('#'):
         try:
             _message = message.text.lower()[1:]
-            user_metrics = await fetch_all_metrics_names(message.from_user.id)
+            user_metrics = await fetch_all_metrics_names(message.from_user.id)  # todo: by hashtag
             if len(_message.split()) >= 3:
                 name, value, comment = _message.split()
             else:
@@ -66,11 +68,24 @@ async def get_all_metric_values(message: types.Message):
 
 
 @log_it(logger=default_logger)
+async def export(message: types.Message):
+    """
+    This handler will be called when user send `/export` comand
+    :param message:
+    :return:
+    """
+    file_path = await prepare_file_to_export(message.from_user.id)
+    file = InputFile(file_path, filename='Выгрузка')
+    await message.answer_document(file)
+    remove_file(file_path)
+
+
+@log_it(logger=default_logger)
 async def get_all_metrics(message: types.Message):
     """
     This handler will be called when user sends `/get_all_metrics` command
     """
-    metrics = await fetch_all_metrics_names(user_id=message.from_user.id)
+    metrics = await fetch_all_metrics_names(user_id=message.from_user.id) # todo: by hashtag
     if metrics:
         msg = ''
         for metric in metrics:
