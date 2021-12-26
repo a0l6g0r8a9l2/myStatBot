@@ -18,7 +18,7 @@ async def set_commands(tg_bot: Bot):
         BotCommand(command="/add_value", description="Добавить значение метрике"),
         BotCommand(command="/get_metrics", description="Получить все метрики"),
         BotCommand(command="/get_metrics_and_values", description="Получить все метрики и значения"),
-        BotCommand(command="/export", description="Выгрузить метрики"),
+        BotCommand(command="/export", description="Экспорт в .csv"),
     ]
     await tg_bot.set_my_commands(commands)
 

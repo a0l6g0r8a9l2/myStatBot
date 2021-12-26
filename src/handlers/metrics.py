@@ -78,7 +78,7 @@ async def export(message: types.Message):
     :return:
     """
     file_path = await prepare_file_to_export(message.from_user.id)
-    file = InputFile(file_path, filename='Выгрузка')
+    file = InputFile(file_path, filename=f'Выгрузка по {datetime.datetime.now().strftime("%d-%m-%Y %H-%M")}')
     await message.answer_document(file)
     remove_file(file_path)
 
