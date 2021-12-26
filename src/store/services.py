@@ -34,6 +34,15 @@ async def add_value_by_metric(value: str, hashtag: str, name: str, user_id: str,
 async def fetch_all_metrics_names(user_id: str):
     user_metrics = await fetch_user_metrics(user_id)
     if user_metrics:
+        return set(k.get('name') for k in user_metrics if user_metrics)
+    else:
+        return
+
+
+@log_it(logger=default_logger)
+async def fetch_all_metrics_hashtags(user_id: str):
+    user_metrics = await fetch_user_metrics(user_id)
+    if user_metrics:
         return set(k.get('hashtag') for k in user_metrics if user_metrics)
     else:
         return
@@ -43,11 +52,12 @@ async def fetch_all_metrics_names(user_id: str):
 async def fetch_user_metric_type(user_id: str, metric_name: str) -> Optional[str]:
     try:
         user_metrics_types = await fetch_user_metric_types(user_id)
-        metric_type = [i.get('metric_type') for i in user_metrics_types if i.get('name') == metric_name][0]
+        default_logger.debug(f'All metric types {user_metrics_types}')
+        metric_type = [i.get(metric_name) for i in user_metrics_types if set(i.keys()).pop() == metric_name][0]
         return metric_type
-    except (TypeError, ValueError) as err:
+    except (TypeError, ValueError, IndexError) as err:
         default_logger.error(f'Ошибка поиска типа метрики! {err}')
-        return None
+        return ''
 
 
 @log_it(logger=default_logger)

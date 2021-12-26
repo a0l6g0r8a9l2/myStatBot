@@ -8,7 +8,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types import InputFile
 
 from src.store.services import add_metric, fetch_all_metrics_names, add_value_by_metric, fetch_all_metric_and_values, \
-    prepare_file_to_export, remove_file
+    prepare_file_to_export, remove_file, fetch_all_metrics_hashtags
 from utils import default_logger, log_it
 
 
@@ -26,15 +26,18 @@ async def add_value(message: types.Message):
     """
     if message.text.startswith('#'):
         try:
-            _message = message.text.lower()[1:]
-            user_metrics = await fetch_all_metrics_names(message.from_user.id)  # todo: by hashtag
-            if len(_message.split()) >= 3:
-                name, value, comment = _message.split()
+            user_input = message.text.lower()[1:]
+            all_user_hashtags = await fetch_all_metrics_hashtags(message.from_user.id)
+            if len(user_input.split()) >= 3:
+                hashtag, value, comment = user_input.split(maxsplit=2)
             else:
-                name, value = _message.split()
+                hashtag, value = user_input.split(maxsplit=1)
                 comment = None
-            if user_metrics and (name in user_metrics):
-                await add_value_by_metric(value=value, hashtag=name, name=name, user_id=message.from_user.id,
+            if all_user_hashtags and (hashtag in all_user_hashtags):
+                await add_value_by_metric(value=value,
+                                          hashtag=hashtag,
+                                          name=hashtag.replace('_', ' '),
+                                          user_id=message.from_user.id,
                                           comment=comment)
                 await message.reply('👍')
             else:
@@ -85,11 +88,10 @@ async def get_all_metrics(message: types.Message):
     """
     This handler will be called when user sends `/get_all_metrics` command
     """
-    metrics = await fetch_all_metrics_names(user_id=message.from_user.id) # todo: by hashtag
-    if metrics:
-        msg = ''
-        for metric in metrics:
-            msg += '#' + metric + '\n'
+    row_user_hashtags = await fetch_all_metrics_hashtags(user_id=message.from_user.id)
+    prepared_hashtags = [f'#{i}' for i in row_user_hashtags if row_user_hashtags]
+    if len(prepared_hashtags) > 0:
+        msg = '\n'.join(prepared_hashtags)
         await message.reply(msg)
     else:
         await message.answer('Не найдено ни одной метрики')

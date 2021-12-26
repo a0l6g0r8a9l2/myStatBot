@@ -77,7 +77,7 @@ async def waiting_for_metric_value_comment(message: types.Message, state: FSMCon
         await state.update_data(comment=message.text)
     metric_data = await state.get_data()
     await add_value_by_metric(value=metric_data.get('metric_value'),
-                              hashtag=metric_data.get('metric_name'),
+                              hashtag=metric_data.get('metric_name').replace(" ", "_"),
                               name=metric_data.get('metric_name'),
                               user_id=message.from_user.id,
                               comment=metric_data.get('comment', '-'))
