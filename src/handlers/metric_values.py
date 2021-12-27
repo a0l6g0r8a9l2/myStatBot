@@ -41,6 +41,7 @@ async def waiting_for_name_of_metric(callback_query: types.CallbackQuery, state:
                 unique_metrics_values = set(user_metrics_values)
             else:
                 unique_metrics_values = []
+        await state.update_data(metric_type=metric_type)
         actions_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         actions_keyboard.add(*[KeyboardButton(i) for i in unique_metrics_values])
         await callback_query.message.answer(f'Метрика {metric_type}, выберите значение или напишите свое:',
@@ -56,14 +57,20 @@ async def waiting_for_name_of_metric(callback_query: types.CallbackQuery, state:
 @log_it(logger=default_logger)
 async def waiting_for_metric_value(message: types.Message, state: FSMContext):
     if message.text.isdigit():
-        actions_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        actions_keyboard.add(KeyboardButton('Закончить'))
-        await state.update_data(metric_value=message.text)
-        await message.answer(f'Ок, значение <b>{message.text}</b>.\n'
-                             f'Добавь комментарий или нажми <b>"Закончить"</b>',
-                             reply_markup=actions_keyboard,
-                             parse_mode='HTML')
-        await AddMetricValue.waiting_for_metric_value_comment.set()
+        state_data = await state.get_data()
+        metric_type = state_data.get('metric_type')
+        if (metric_type == MetricTypes.relative.value) and (int(message.text) > 5):
+            await message.answer(f'Значение для метрики с типом <b>{metric_type}</b> должно быть от 1 до 5',
+                                 parse_mode='HTML')
+        else:
+            actions_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            actions_keyboard.add(KeyboardButton('Закончить'))
+            await state.update_data(metric_value=message.text)
+            await message.answer(f'Ок, значение <b>{message.text}</b>.\n'
+                                 f'Добавь комментарий или нажми <b>"Закончить"</b>',
+                                 reply_markup=actions_keyboard,
+                                 parse_mode='HTML')
+            await AddMetricValue.waiting_for_metric_value_comment.set()
     else:
         msg = f'<b>Значение должно быть числовым!</b>\n'
         msg += f'- от <b>1 до 5</b>, если метрика {MetricTypes.relative.value}\n'
