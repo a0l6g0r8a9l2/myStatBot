@@ -7,8 +7,8 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types import InputFile
 
-from src.store.services import add_metric, fetch_all_metrics_names, add_value_by_metric, fetch_all_metric_and_values, \
-    prepare_file_to_export, remove_file, fetch_all_metrics_hashtags
+from src.store.services import add_metric, fetch_all_metrics_names, add_value_by_metric, prepare_file_to_export, \
+    remove_file, fetch_all_metrics_hashtags, fetch_user_metric_type
 from utils import default_logger, log_it
 
 
@@ -33,7 +33,12 @@ async def add_value(message: types.Message):
             else:
                 hashtag, value = user_input.split(maxsplit=1)
                 comment = None
-            if all_user_hashtags and (hashtag in all_user_hashtags):
+            metric_type = await fetch_user_metric_type(message.from_user.id, hashtag.replace('_', ' '))
+            default_logger.debug(f'Metric type {metric_type} and message {value}')
+            if (metric_type == MetricTypes.relative.value) and (int(value) > 5):
+                await message.answer(f'Значение для метрики с типом <b>{metric_type}</b> должно быть от 1 до 5',
+                                     parse_mode='HTML')
+            elif all_user_hashtags and (hashtag in all_user_hashtags):
                 await add_value_by_metric(value=value,
                                           hashtag=hashtag,
                                           name=hashtag.replace('_', ' '),
@@ -49,36 +54,14 @@ async def add_value(message: types.Message):
 
 
 @log_it(logger=default_logger)
-async def get_all_metric_values(message: types.Message):
-    """
-    This handler will be called when user sends `/get_all_metric_values` command
-    """
-    metrics_values = await fetch_all_metric_and_values(message.from_user.id)
-    if metrics_values:
-        msg = 'Метрика, Значение, Дата, Комментарий' + '\n'
-        for row in metrics_values:
-            for i, value in enumerate(row):
-                default_logger.debug(f'Номер значения {i}, значение {value}')
-                if not value:
-                    value = '-'
-                elif i == 2:
-                    value = datetime.datetime.fromisoformat(value).strftime("%d.%m.%Y %H:%M")
-                msg += value + ', '
-            msg += '\n'
-        await message.reply(msg)
-    else:
-        await message.reply('Не найдено ни однного значения метрик')
-
-
-@log_it(logger=default_logger)
 async def export(message: types.Message):
     """
-    This handler will be called when user send `/export` comand
+    This handler will be called when user send `/export` command
     :param message:
     :return:
     """
     file_path = await prepare_file_to_export(message.from_user.id)
-    file = InputFile(file_path, filename=f'Выгрузка по {datetime.datetime.now().strftime("%d-%m-%Y %H-%M")}')
+    file = InputFile(file_path, filename=f'Выгрузка по {datetime.datetime.now().strftime("%d-%m-%Y %H-%M")}.csv')
     await message.answer_document(file)
     remove_file(file_path)
 
