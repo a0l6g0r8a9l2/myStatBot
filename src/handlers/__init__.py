@@ -1,9 +1,10 @@
 from aiogram import Dispatcher
 
 from handlers.metric_values import new_value_to_metric, waiting_for_name_of_metric, AddMetricValue, \
-    waiting_for_metric_value_comment, waiting_for_metric_value
-from handlers.metrics import send_welcome, add_value, get_all_metrics, new_metric, \
-    waiting_for_metric_name, waiting_for_metric_type, AddMetric, export
+    waiting_for_metric_value_comment, waiting_for_metric_value, add_value, export
+from handlers.metrics import get_all_metrics, new_metric, \
+    waiting_for_metric_name, waiting_for_metric_type, AddMetric
+from handlers.common import send_welcome
 
 
 def register_handlers(dp: Dispatcher):
