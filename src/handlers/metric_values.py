@@ -1,11 +1,13 @@
+import datetime
+
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, InputFile
 
 from handlers.metrics import MetricTypes
 from src.store.services import fetch_all_metrics_names, fetch_user_metric_type, \
-    fetch_values_user_metric, add_value_by_metric
+    fetch_values_user_metric, add_value_by_metric, fetch_all_metrics_hashtags, prepare_file_to_export, remove_file
 from utils import default_logger, log_it
 
 
@@ -13,6 +15,40 @@ class AddMetricValue(StatesGroup):
     waiting_for_metric_name = State()
     waiting_for_metric_value = State()
     waiting_for_metric_value_comment = State()
+
+
+@log_it(logger=default_logger)
+async def add_value(message: types.Message):
+    """
+    This handler will be called when user sends #some
+    """
+    if message.text.startswith('#'):
+        try:
+            user_input = message.text.lower()[1:]
+            all_user_hashtags = await fetch_all_metrics_hashtags(message.from_user.id)
+            if len(user_input.split()) >= 3:
+                hashtag, value, comment = user_input.split(maxsplit=2)
+            else:
+                hashtag, value = user_input.split(maxsplit=1)
+                comment = None
+            metric_type = await fetch_user_metric_type(message.from_user.id, hashtag.replace('_', ' '))
+            default_logger.debug(f'Metric type {metric_type} and message {value}')
+            if (metric_type == MetricTypes.relative.value) and (int(value) > 5):
+                await message.answer(f'Значение для метрики с типом <b>{metric_type}</b> должно быть от 1 до 5',
+                                     parse_mode='HTML')
+            elif all_user_hashtags and (hashtag in all_user_hashtags):
+                await add_value_by_metric(value=value,
+                                          hashtag=hashtag,
+                                          name=hashtag.replace('_', ' '),
+                                          user_id=message.from_user.id,
+                                          comment=comment)
+                await message.reply('👍')
+            else:
+                await message.reply('Не нашел метрику')
+        except ValueError:
+            await message.reply(f'Забыл ввести значение после {message.text}?')
+    else:
+        await message.reply('Не понял что нужно сделать')
 
 
 @log_it(logger=default_logger)
@@ -91,3 +127,15 @@ async def waiting_for_metric_value_comment(message: types.Message, state: FSMCon
     await message.answer(f'👍')
     await state.finish()
 
+
+@log_it(logger=default_logger)
+async def export(message: types.Message):
+    """
+    This handler will be called when user send `/export` command
+    :param message:
+    :return:
+    """
+    file_path = await prepare_file_to_export(message.from_user.id)
+    file = InputFile(file_path, filename=f'Выгрузка по {datetime.datetime.now().strftime("%d-%m-%Y %H-%M")}.csv')
+    await message.answer_document(file)
+    remove_file(file_path)
