@@ -1,4 +1,3 @@
-import logging
 from typing import List
 
 import motor.motor_asyncio
@@ -53,6 +52,22 @@ class MongodbService:
                 return result
         except PyMongoError as err:
             default_logger.error(err.args)
+
+    @log_it(logger=default_logger)
+    async def delete_many(self, value: str, key: str = 'user_id') -> bool:
+        """
+        Delete many documents by condition
+        :param value: value for some key
+        :param key: key to find
+        :return: True if success
+        """
+        try:
+            async with await self._client.start_session() as s:
+                await self._collection.delete_many({key: {"$eq": value}}, session=s)
+                return True
+        except PyMongoError as err:
+            default_logger.error(err.args)
+            return False
 
     def __repr__(self):
         return f'DB: {self._db.name} Collection: {self._collection.name}'

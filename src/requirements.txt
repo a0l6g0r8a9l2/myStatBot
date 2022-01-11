@@ -16,3 +16,4 @@ typing-extensions==4.0.0
 yarl==1.7.2
 motor~=2.5.1
 pymongo~=3.12.1
+emoji==1.6.1
