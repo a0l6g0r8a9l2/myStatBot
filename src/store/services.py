@@ -127,8 +127,10 @@ def create_csv_file(file_prefix_name: str, column_names: list, data: list[list],
 
 
 @log_it(logger=default_logger)
-async def prepare_file_to_export(user_id: str) -> Path:
+async def prepare_file_to_export(user_id: str) -> Optional[Path]:
     metric_values = await fetch_all_metric_and_values(user_id)
+    if not metric_values:
+        return None
     default_logger.debug(f'User metrics values: {metric_values}')
     metric_column_names = ['Метрика', 'Значение', 'Дата', 'Комментарий']
     file_path = create_csv_file(user_id, metric_column_names, metric_values)
@@ -142,3 +144,12 @@ def remove_file(path: Path):
         default_logger.debug('Файл удален')
     else:
         default_logger.warning('Файл не найден')
+
+
+@log_it(logger=default_logger)
+async def delete_user_data(user_id: str):
+    """ Removing data from all collection"""
+    values_collection = MongodbService(collection='user_metric_values')
+    await values_collection.delete_many(value=user_id)
+    metric_collection = MongodbService(collection='user_metrics')
+    await metric_collection.delete_many(value=user_id)

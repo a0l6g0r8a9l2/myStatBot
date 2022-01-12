@@ -1,4 +1,15 @@
+from enum import Enum
+
 from aiogram import types
+
+
+class ConfirmOptions(Enum):
+    true = 'Подтверждаю'
+    false = 'Отмена'
+
+    @staticmethod
+    def list():
+        return list(map(lambda c: c.value, ConfirmOptions))
 
 
 async def send_welcome(message: types.Message):

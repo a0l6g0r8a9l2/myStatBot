@@ -4,10 +4,13 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, InputFile
+from aiogram.utils.emoji import emojize
 
+from handlers.common import ConfirmOptions
 from handlers.metrics import MetricTypes
 from src.store.services import fetch_all_metrics_names, fetch_user_metric_type, \
-    fetch_values_user_metric, add_value_by_metric, fetch_all_metrics_hashtags, prepare_file_to_export, remove_file
+    fetch_values_user_metric, add_value_by_metric, fetch_all_metrics_hashtags, prepare_file_to_export, remove_file, \
+    delete_user_data
 from utils import default_logger, log_it
 
 
@@ -15,6 +18,10 @@ class AddMetricValue(StatesGroup):
     waiting_for_metric_name = State()
     waiting_for_metric_value = State()
     waiting_for_metric_value_comment = State()
+
+
+class DeleteValues(StatesGroup):
+    waiting_for_confirm = State()
 
 
 @log_it(logger=default_logger)
@@ -136,6 +143,41 @@ async def export(message: types.Message):
     :return:
     """
     file_path = await prepare_file_to_export(message.from_user.id)
-    file = InputFile(file_path, filename=f'Выгрузка по {datetime.datetime.now().strftime("%d-%m-%Y %H-%M")}.csv')
-    await message.answer_document(file)
-    remove_file(file_path)
+    if not file_path:
+        await message.answer(f'Нет данных для выгрузки')
+    else:
+        file = InputFile(file_path, filename=f'Выгрузка по {datetime.datetime.now().strftime("%d-%m-%Y %H-%M")}.csv')
+        await message.answer_document(file)
+        remove_file(file_path)
+
+
+@log_it(logger=default_logger)
+async def confirm_delete_warning(message: types.Message):
+    """
+    This handler will be called first when user send `/delete` command
+    :return:
+    """
+    confirm_buttons = ConfirmOptions.list()
+    actions_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    actions_keyboard.add(*[KeyboardButton(i) for i in confirm_buttons])
+    await message.answer(f'<b>Внимание! Удаление данных необратимо!</b>\n\n'
+                         f'Перед удалением, рекомендуется выгрузить ваши данные командой <b>/export</b>\n\n'
+                         f'<b>Вы подтверждаете удаление?</b>',
+                         reply_markup=actions_keyboard,
+                         parse_mode='HTML')
+    await DeleteValues.waiting_for_confirm.set()
+
+
+@log_it(logger=default_logger)
+async def delete_all(message: types.Message, state: FSMContext):
+    """
+    This handler will be called second when user send `/delete` command
+    :return:
+    """
+    if message.text == ConfirmOptions.true.value:
+        await delete_user_data(message.from_user.id)
+        await message.answer(emojize(f'Ваши метрики удалены :heavy_exclamation_mark:'))
+        await state.finish()
+    else:
+        await message.answer(emojize(f'Продолжаем вести статистику! :fire:'))
+        await state.finish()

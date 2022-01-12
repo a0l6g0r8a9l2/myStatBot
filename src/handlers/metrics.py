@@ -15,8 +15,8 @@ async def get_all_metrics(message: types.Message):
     This handler will be called when user sends `/get_all_metrics` command
     """
     row_user_hashtags = await fetch_all_metrics_hashtags(user_id=message.from_user.id)
-    prepared_hashtags = [f'#{i}' for i in row_user_hashtags if row_user_hashtags]
-    if len(prepared_hashtags) > 0:
+    if row_user_hashtags:
+        prepared_hashtags = [f'#{i}' for i in row_user_hashtags]
         msg = '\n'.join(prepared_hashtags)
         await message.reply(msg)
     else:
