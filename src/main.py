@@ -43,6 +43,6 @@ if __name__ == '__main__':
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        default_logger.info(f'Buy!')
+        default_logger.info('Buy!')
     except TelegramAPIError as err:
         default_logger.error(f'Handling error: {err.args}')

@@ -83,4 +83,4 @@ async def waiting_for_metric_type(callback_query: types.CallbackQuery, state: FS
                                             f'#{str(metric.get("metric_name")).replace(" ", "_")} значение комментарий')
         await state.finish()
     else:
-        await callback_query.message.answer(f'Такой тип не поддерживатеся.')
+        await callback_query.message.answer('Такой тип не поддерживатеся.')

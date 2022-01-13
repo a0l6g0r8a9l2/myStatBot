@@ -115,7 +115,7 @@ async def waiting_for_metric_value(message: types.Message, state: FSMContext):
                                  parse_mode='HTML')
             await AddMetricValue.waiting_for_metric_value_comment.set()
     else:
-        msg = f'<b>Значение должно быть числовым!</b>\n'
+        msg = '<b>Значение должно быть числовым!</b>\n'
         msg += f'- от <b>1 до 5</b>, если метрика {MetricTypes.relative.value}\n'
         msg += f'- <b>неотрицательное число</b>, если метрика {MetricTypes.absolute.value}'
         await message.answer(msg, parse_mode='HTML')
@@ -131,7 +131,7 @@ async def waiting_for_metric_value_comment(message: types.Message, state: FSMCon
                               name=metric_data.get('metric_name'),
                               user_id=message.from_user.id,
                               comment=metric_data.get('comment', '-'))
-    await message.answer(f'👍')
+    await message.answer('👍')
     await state.finish()
 
 
@@ -144,7 +144,7 @@ async def export(message: types.Message):
     """
     file_path = await prepare_file_to_export(message.from_user.id)
     if not file_path:
-        await message.answer(f'Нет данных для выгрузки')
+        await message.answer('Нет данных для выгрузки')
     else:
         file = InputFile(file_path, filename=f'Выгрузка по {datetime.datetime.now().strftime("%d-%m-%Y %H-%M")}.csv')
         await message.answer_document(file)
@@ -160,9 +160,9 @@ async def confirm_delete_warning(message: types.Message):
     confirm_buttons = ConfirmOptions.list()
     actions_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     actions_keyboard.add(*[KeyboardButton(i) for i in confirm_buttons])
-    await message.answer(f'<b>Внимание! Удаление данных необратимо!</b>\n\n'
-                         f'Перед удалением, рекомендуется выгрузить ваши данные командой <b>/export</b>\n\n'
-                         f'<b>Вы подтверждаете удаление?</b>',
+    await message.answer('<b>Внимание! Удаление данных необратимо!</b>\n\n'
+                         'Перед удалением, рекомендуется выгрузить ваши данные командой <b>/export</b>\n\n'
+                         '<b>Вы подтверждаете удаление?</b>',
                          reply_markup=actions_keyboard,
                          parse_mode='HTML')
     await DeleteValues.waiting_for_confirm.set()
@@ -176,8 +176,8 @@ async def delete_all(message: types.Message, state: FSMContext):
     """
     if message.text == ConfirmOptions.true.value:
         await delete_user_data(message.from_user.id)
-        await message.answer(emojize(f'Ваши метрики удалены :heavy_exclamation_mark:'))
+        await message.answer(emojize('Ваши метрики удалены :heavy_exclamation_mark:'))
         await state.finish()
     else:
-        await message.answer(emojize(f'Продолжаем вести статистику! :fire:'))
+        await message.answer(emojize('Продолжаем вести статистику! :fire:'))
         await state.finish()
