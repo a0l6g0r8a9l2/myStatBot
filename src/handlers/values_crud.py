@@ -6,8 +6,7 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, InputFile
 from aiogram.utils.emoji import emojize
 
-from handlers.common import ConfirmOptions
-from handlers.metrics import MetricTypes
+from handlers.common import ConfirmOptions, MetricTypes
 from src.store.services import fetch_all_metrics_names, fetch_user_metric_type, \
     fetch_values_user_metric, add_value_by_metric, fetch_all_metrics_hashtags, prepare_file_to_export, remove_file, \
     delete_user_data
@@ -174,7 +173,7 @@ async def delete_all(message: types.Message, state: FSMContext):
     This handler will be called second when user send `/delete` command
     :return:
     """
-    if message.text == ConfirmOptions.true.value:
+    if message.text == ConfirmOptions.TRUE.value:
         await delete_user_data(message.from_user.id)
         await message.answer(emojize('Ваши метрики удалены :heavy_exclamation_mark:'))
         await state.finish()

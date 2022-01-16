@@ -4,16 +4,22 @@ import os
 from pathlib import Path
 from typing import Optional
 
+import pandas as pd
+import numpy as np
+
+from handlers.common import FillMetricValueStrategy
 from utils import log_it, default_logger
 from .mongo import MongodbService
 
 
 @log_it(logger=default_logger)
-async def add_metric(name: str, hashtag: str, metric_type: str, user_id: str):
+async def add_metric(name: str, hashtag: str, metric_type: str, user_id: str,
+                     fill_strategy: str = FillMetricValueStrategy.MEAN.value):
     db = MongodbService(collection='user_metrics')
     await db.create_one({'name': name,
                          'hashtag': hashtag,
                          'metric_type': metric_type,
+                         'fill_strategy': fill_strategy,
                          'user_id': user_id})
 
 
@@ -21,12 +27,14 @@ async def add_metric(name: str, hashtag: str, metric_type: str, user_id: str):
 async def add_value_by_metric(value: str, hashtag: str, name: str, user_id: str, comment: Optional[str] = None):
     db = MongodbService(collection='user_metric_values')
     await db.create_one(
-        {'value': value,
-         'hashtag': hashtag,
-         'name': name,
-         'user_id': user_id,
-         'date': datetime.datetime.today().isoformat(),
-         'comment': comment}
+        {
+            'value': value,
+            'hashtag': hashtag,
+            'name': name,
+            'user_id': user_id,
+            'date': datetime.datetime.today().isoformat(),
+            'comment': comment
+        }
     )
 
 
@@ -90,6 +98,61 @@ async def fetch_all_metric_and_values(user_id: str):
         return [[k.get('hashtag'), k.get('value'), k.get('date'), k.get('comment', '-')] for k in user_metrics_values]
     else:
         return
+
+
+@log_it(logger=default_logger)
+async def fill_empty_values(user_id: str, metrics: list[list]) -> pd.DataFrame:
+    """
+    Эта функция примет список значений, найдет пропуски значений по датам
+    и заполнит их согласно стратегии заполнения пропущенных значений
+    для данной метрики
+    """
+    metrics_column_name = ['name', 'value', 'comment', 'date']
+    filled_by_user_data = pd.DataFrame(metrics, columns=metrics_column_name)
+    filled_by_user_data['date'] = pd.to_datetime(filled_by_user_data['date'], unit='ns').dt.date
+    filled_by_user_data['value'] = pd.to_numeric(filled_by_user_data['value'], errors='coerce')
+    filled_by_user_data['name'] = filled_by_user_data['name'].astype(str)
+    filled_by_user_data = filled_by_user_data.replace({'comment': np.nan}, '-')
+
+    missing_data = prepare_missing_data(user_id, filled_by_user_data)
+    missing_df = pd.DataFrame(missing_data, columns=metrics_column_name)
+
+    completed_data = filled_by_user_data.append(missing_df)
+    return completed_data
+
+
+@log_it(logger=default_logger)
+async def get_fill_value(user_id: str, metric_name: str, metric_values: pd.DataFrame) -> float:
+    metric_info = await fetch_user_metrics(user_id)
+    for m in metric_info:
+        if m.get('name') == metric_name:
+            if m.get('fill_strategy') == FillMetricValueStrategy.MEAN.value:
+                return float(metric_values.where(metric_values['name'] == metric_name).value.mean())
+            elif m.get('fill_strategy') == FillMetricValueStrategy.MODE.value:
+                return float(metric_values.where(metric_values['name'] == metric_name).value.mode())
+            else:
+                return 0
+
+
+@log_it(logger=default_logger)
+def prepare_missing_data(user_id: str, metric_values: pd.DataFrame) -> Optional[list[list]]:
+    min_date = metric_values['date'].min()
+    max_date = metric_values['date'].max()
+    observed_date = pd.date_range(min_date, max_date, freq='D')
+    observed_date = pd.Series(observed_date, name='date')
+
+    unique_metric_names = metric_values['name'].unique()
+
+    rows_to_add = []
+    for name in unique_metric_names:
+        unique_date_with_metric = set(metric_values.where(metric_values['name'] == name)
+                                      .dropna(subset=['name', 'value']).date.unique())
+        date_range_set = set(observed_date.dt.date.unique())
+        unique_date_without_metric = date_range_set - unique_date_with_metric
+        for date in unique_date_without_metric:
+            value = get_fill_value(user_id, name, metric_values)
+            rows_to_add.append([name, value, '-', date])
+    return rows_to_add
 
 
 @log_it(logger=default_logger)
