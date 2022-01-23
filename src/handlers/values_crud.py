@@ -7,8 +7,10 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 from aiogram.utils.emoji import emojize
 
 from handlers.common import ConfirmOptions, MetricTypes
+from services.exporter import MetricsExporter
+from services.utils import remove_file
 from src.store.services import fetch_all_metrics_names, fetch_user_metric_type, \
-    fetch_values_user_metric, add_value_by_metric, fetch_all_metrics_hashtags, prepare_file_to_export, remove_file, \
+    fetch_values_user_metric, add_value_by_metric, fetch_all_metrics_hashtags, \
     delete_user_data
 from utils import default_logger, log_it
 
@@ -138,10 +140,8 @@ async def waiting_for_metric_value_comment(message: types.Message, state: FSMCon
 async def export(message: types.Message):
     """
     This handler will be called when user send `/export` command
-    :param message:
-    :return:
     """
-    file_path = await prepare_file_to_export(message.from_user.id)
+    file_path = await MetricsExporter(message.from_user.id).export_data_to_csv()
     if not file_path:
         await message.answer('Нет данных для выгрузки')
     else:
@@ -154,7 +154,6 @@ async def export(message: types.Message):
 async def confirm_delete_warning(message: types.Message):
     """
     This handler will be called first when user send `/delete` command
-    :return:
     """
     confirm_buttons = ConfirmOptions.list()
     actions_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -171,7 +170,6 @@ async def confirm_delete_warning(message: types.Message):
 async def delete_all(message: types.Message, state: FSMContext):
     """
     This handler will be called second when user send `/delete` command
-    :return:
     """
     if message.text == ConfirmOptions.TRUE.value:
         await delete_user_data(message.from_user.id)
