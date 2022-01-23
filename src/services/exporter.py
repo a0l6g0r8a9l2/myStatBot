@@ -9,7 +9,6 @@ from handlers.utils import FillMetricValueStrategy
 from services.metrics import Metric
 from services.utils import create_file_path_if_not_exist
 from utils import log_it, default_logger
-from utils.exceptions import NoUserMetricsError
 
 
 class MetricsExporter(Metric):
@@ -66,6 +65,7 @@ class MetricsExporter(Metric):
 
         :param metric_values: имеющиеся данные
         """
+        # todo: заполнять пропущенные значения с дня первого значения КОНКРЕТНОЙ метрики (а не самой первой)
         min_date = metric_values['date'].min()
         max_date = metric_values['date'].max()
         observed_date = pd.date_range(min_date, max_date, freq='D')
@@ -85,7 +85,7 @@ class MetricsExporter(Metric):
         return rows_to_add
 
     @log_it(logger=default_logger)
-    async def export_data_to_csv(self, fill_empty_values: bool = True) -> Path:
+    async def export_data_to_csv(self, fill_empty_values: bool = True) -> Optional[Path]:
         """
         Экспортировать csv файл с данными для выгрузки
 
@@ -95,7 +95,7 @@ class MetricsExporter(Metric):
         default_logger.debug(f'User metrics data: {data}')
         default_logger.debug(f'Should fill empty data: {fill_empty_values}')
         if not data:
-            raise NoUserMetricsError
+            return None
 
         file_path = create_file_path_if_not_exist() / self.file_name
         export_data: pd.DataFrame = await self.prepare_data_to_export(data, fill_empty_values)

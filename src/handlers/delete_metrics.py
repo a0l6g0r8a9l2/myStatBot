@@ -5,7 +5,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.emoji import emojize
 
 from handlers.utils import ConfirmOptions
-from store.services import delete_user_data
+from services.metrics import Metric
 from utils import log_it, default_logger
 
 
@@ -35,7 +35,7 @@ async def delete_all(message: types.Message, state: FSMContext):
     This handler will be called second when user send `/delete` command
     """
     if message.text == ConfirmOptions.TRUE.value:
-        await delete_user_data(message.from_user.id)
+        await Metric(message.from_user.id).delete_user_data()
         await message.answer(emojize('Ваши метрики удалены :heavy_exclamation_mark:'))
         await state.finish()
     else:

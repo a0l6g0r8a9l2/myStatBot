@@ -4,8 +4,7 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
 from handlers.utils import MetricTypes
-from src.store.services import fetch_all_metrics_names, fetch_user_metric_type, \
-    fetch_values_user_metric, add_value_by_metric, fetch_all_metrics_hashtags
+from services.metrics import Metric
 from utils import default_logger, log_it
 
 
@@ -23,23 +22,22 @@ async def add_value(message: types.Message):
     if message.text.startswith('#'):
         try:
             user_input = message.text.lower()[1:]
-            all_user_hashtags = await fetch_all_metrics_hashtags(message.from_user.id)
+            all_user_hashtags = await Metric(message.from_user.id).fetch_all_metrics_hashtags()
             if len(user_input.split()) >= 3:
                 hashtag, value, comment = user_input.split(maxsplit=2)
             else:
                 hashtag, value = user_input.split(maxsplit=1)
                 comment = None
-            metric_type = await fetch_user_metric_type(message.from_user.id, hashtag.replace('_', ' '))
+            metric_type = await Metric(message.from_user.id).fetch_user_metric_type(hashtag.replace('_', ' '))
             default_logger.debug(f'Metric type {metric_type} and message {value}')
             if (metric_type == MetricTypes.relative.value) and (int(value) > 5):
                 await message.answer(f'Значение для метрики с типом <b>{metric_type}</b> должно быть от 1 до 5',
                                      parse_mode='HTML')
             elif all_user_hashtags and (hashtag in all_user_hashtags):
-                await add_value_by_metric(value=value,
-                                          hashtag=hashtag,
-                                          name=hashtag.replace('_', ' '),
-                                          user_id=message.from_user.id,
-                                          comment=comment)
+                await Metric(message.from_user.id).add_value_by_metric(value=value,
+                                                                       hashtag=hashtag,
+                                                                       name=hashtag.replace('_', ' '),
+                                                                       comment=comment)
                 await message.reply('👍')
             else:
                 await message.reply('Не нашел метрику')
@@ -54,20 +52,25 @@ async def new_value_to_metric(message: types.Message):
     """
     This handler will be called when user sends `/add_value` command
     """
-    user_metrics = await fetch_all_metrics_names(user_id=message.from_user.id)
-    actions_keyboard = InlineKeyboardMarkup(row_width=3)
-    actions_keyboard.add(*[InlineKeyboardButton(i, callback_data=i) for i in user_metrics])
-    await message.reply("Ок, новое значение. Выбери метрику:", reply_markup=actions_keyboard)
-    await AddMetricValue.waiting_for_metric_name.set()
+    user_metrics = await Metric(message.from_user.id).fetch_all_metrics_names()
+    if user_metrics:
+        actions_keyboard = InlineKeyboardMarkup(row_width=3)
+        actions_keyboard.add(*[InlineKeyboardButton(i, callback_data=i) for i in user_metrics])
+        await message.reply("Ок, новое значение. Выбери метрику:", reply_markup=actions_keyboard)
+        await AddMetricValue.waiting_for_metric_name.set()
+    else:
+        await message.reply('Не найдено ни одной метрики.\n'
+                            'Создайте первую с помощью команды /new_metric')
 
 
 @log_it(logger=default_logger)
 async def waiting_for_name_of_metric(callback_query: types.CallbackQuery, state: FSMContext):
-    user_metrics = await fetch_all_metrics_names(user_id=callback_query.from_user.id)
+    user_metrics = await Metric(callback_query.from_user.id).fetch_all_metrics_names()
     if callback_query.data in user_metrics:
         await state.update_data(metric_name=callback_query.data)
-        metric_type = await fetch_user_metric_type(callback_query.from_user.id, callback_query.data)
-        user_metrics_values = await fetch_values_user_metric(callback_query.from_user.id, callback_query.data)
+        user_metric = Metric(callback_query.from_user.id)
+        metric_type = await user_metric.fetch_user_metric_type(callback_query.data)
+        user_metrics_values = await user_metric.fetch_values_user_metric(callback_query.data)
         if metric_type == MetricTypes.relative.value:
             unique_metrics_values = list(map(str, range(1, 6)))
         else:
@@ -117,12 +120,9 @@ async def waiting_for_metric_value_comment(message: types.Message, state: FSMCon
     if message.text != 'Закончить':
         await state.update_data(comment=message.text)
     metric_data = await state.get_data()
-    await add_value_by_metric(value=metric_data.get('metric_value'),
-                              hashtag=metric_data.get('metric_name').replace(" ", "_"),
-                              name=metric_data.get('metric_name'),
-                              user_id=message.from_user.id,
-                              comment=metric_data.get('comment', '-'))
+    await Metric(message.from_user.id).add_value_by_metric(value=metric_data.get('metric_value'),
+                                                           hashtag=metric_data.get('metric_name').replace(" ", "_"),
+                                                           name=metric_data.get('metric_name'),
+                                                           comment=metric_data.get('comment', '-'))
     await message.answer('👍')
     await state.finish()
-
-

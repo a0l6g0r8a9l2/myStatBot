@@ -4,7 +4,7 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from handlers.utils import FillMetricValueStrategy, MetricTypes
-from src.store.services import add_metric, fetch_all_metrics_names
+from services.metrics import Metric
 from utils import default_logger, log_it
 
 
@@ -31,7 +31,7 @@ async def waiting_for_metric_name(message: types.Message, state: FSMContext):
     await state.update_data(metric_name=message.text.lower(), user_id=message.from_user.id)
     actions_keyboard = InlineKeyboardMarkup(row_width=3)
     actions_keyboard.row(*[InlineKeyboardButton(i, callback_data=i) for i in MetricTypes.list()])
-    user_metrics = await fetch_all_metrics_names(message.from_user.id)
+    user_metrics = await Metric(message.from_user.id).fetch_all_metrics_names()
     if (user_metrics is None) or (message.text.lower() not in user_metrics):
         await message.answer(f"Ok, метрика <u>{message.text.lower()}</u>. Давай выберем тип:",
                              reply_markup=actions_keyboard, parse_mode='HTML')
@@ -71,12 +71,11 @@ async def waiting_for_fill_empty_values_strategy(callback_query: types.CallbackQ
         name = metric_state_store.get('metric_name')
         kind = metric_state_store.get('metric_type')
         fill_strategy = FillMetricValueStrategy(callback_query.data).name
-        await add_metric(
+        await Metric(callback_query.from_user.id).add_metric(
             name=name,
             hashtag=str(name).replace(' ', '_'),
             metric_type=kind,
-            fill_strategy=fill_strategy,
-            user_id=metric_state_store.get('user_id')
+            fill_strategy=fill_strategy
         )
         await callback_query.message.answer(f'👍\n'
                                             f'Теперь можешь добалять значение метрики по '
