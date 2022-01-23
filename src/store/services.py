@@ -1,7 +1,7 @@
 import datetime
 from typing import Optional
 
-from handlers.common import FillMetricValueStrategy
+from handlers.utils import FillMetricValueStrategy
 from utils import log_it, default_logger
 from .mongo import MongodbService
 

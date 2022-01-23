@@ -3,23 +3,9 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from handlers.common import MetricTypes, FillMetricValueStrategy
-from src.store.services import add_metric, fetch_all_metrics_names, fetch_all_metrics_hashtags
+from handlers.utils import FillMetricValueStrategy, MetricTypes
+from src.store.services import add_metric, fetch_all_metrics_names
 from utils import default_logger, log_it
-
-
-@log_it(logger=default_logger)
-async def get_all_metrics(message: types.Message):
-    """
-    This handler will be called when user sends `/get_all_metrics` command
-    """
-    row_user_hashtags = await fetch_all_metrics_hashtags(user_id=message.from_user.id)
-    if row_user_hashtags:
-        prepared_hashtags = [f'#{i}' for i in row_user_hashtags]
-        msg = '\n'.join(prepared_hashtags)
-        await message.reply(msg)
-    else:
-        await message.answer('Не найдено ни одной метрики')
 
 
 class AddMetric(StatesGroup):

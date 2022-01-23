@@ -1,11 +1,13 @@
 from aiogram import Dispatcher
 
-from handlers.values_crud import new_value_to_metric, waiting_for_name_of_metric, AddMetricValue, \
-    waiting_for_metric_value_comment, waiting_for_metric_value, add_value, export, confirm_delete_warning, delete_all, \
-    DeleteValues
-from handlers.metrics import get_all_metrics, new_metric, \
+from handlers.add_value import new_value_to_metric, waiting_for_name_of_metric, AddMetricValue, \
+    waiting_for_metric_value_comment, waiting_for_metric_value, add_value
+from handlers.delete_metrics import DeleteValues, confirm_delete_warning, delete_all
+from handlers.export_metrics import export
+from handlers.add_metric import new_metric, \
     waiting_for_metric_name, waiting_for_metric_type, AddMetric, waiting_for_fill_empty_values_strategy
-from handlers.common import send_welcome
+from handlers.get_all_metrics import get_all_metrics
+from handlers.info import send_welcome
 
 
 def register_handlers(dp: Dispatcher):

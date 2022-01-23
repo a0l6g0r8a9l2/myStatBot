@@ -5,7 +5,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from handlers.common import FillMetricValueStrategy
+from handlers.utils import FillMetricValueStrategy
 from services.metrics import Metric
 from services.utils import create_file_path_if_not_exist
 from utils import log_it, default_logger
@@ -38,6 +38,7 @@ class MetricsExporter(Metric):
             missing_df = pd.DataFrame(missing_data, columns=metrics_column_name)
             completed_data = filled_by_user_data.append(missing_df)
             return completed_data
+        # metric_column_names = ['Метрика', 'Значение', 'Дата', 'Комментарий'] # todo: rename column names
         return filled_by_user_data
 
     @log_it(logger=default_logger)
@@ -52,9 +53,9 @@ class MetricsExporter(Metric):
         for m in metric_info:
             if m.get('name') == metric_name:
                 if m.get('fill_strategy') == FillMetricValueStrategy.MEAN.name:
-                    return float(metric_values.where(metric_values['name'] == metric_name).value.mean())
+                    return round(float(metric_values.where(metric_values['name'] == metric_name).value.mean()), 2)
                 elif m.get('fill_strategy') == FillMetricValueStrategy.MODE.name:
-                    return float(metric_values.where(metric_values['name'] == metric_name).value.mode())
+                    return round(float(metric_values.where(metric_values['name'] == metric_name).value.mode()[1]), 2)
                 else:
                     return 0
 
@@ -96,7 +97,6 @@ class MetricsExporter(Metric):
         if not data:
             raise NoUserMetricsError
 
-        # metric_column_names = ['Метрика', 'Значение', 'Дата', 'Комментарий']
         file_path = create_file_path_if_not_exist() / self.file_name
         export_data: pd.DataFrame = await self.prepare_data_to_export(data, fill_empty_values)
         export_data.to_csv(path_or_buf=file_path, index=False)
