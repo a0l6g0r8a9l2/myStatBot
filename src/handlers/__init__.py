@@ -17,7 +17,8 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(new_metric, commands=['new_metric'], state='*')
     dp.register_message_handler(waiting_for_metric_name, state=AddMetric.waiting_for_name, regexp='^[\w+]\w+')
     dp.register_callback_query_handler(waiting_for_metric_type, state=AddMetric.waiting_for_type)
-    dp.register_callback_query_handler(waiting_for_fill_empty_values_strategy, state=AddMetric.waiting_for_fill_strategy)
+    dp.register_callback_query_handler(waiting_for_fill_empty_values_strategy,
+                                       state=AddMetric.waiting_for_fill_strategy)
     dp.register_message_handler(new_value_to_metric, commands=['add_value'], state='*')
     dp.register_callback_query_handler(waiting_for_name_of_metric,
                                        state=AddMetricValue.waiting_for_metric_name)
@@ -26,7 +27,7 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(waiting_for_metric_value_comment,
                                 state=AddMetricValue.waiting_for_metric_value_comment)
     dp.register_message_handler(set_export_options, commands=['export'])
-    dp.register_message_handler(confirm_delete_warning, commands=['delete_all'])
+    dp.register_message_handler(confirm_delete_warning, commands=['delete'])
     dp.register_message_handler(delete_all,
                                 state=DeleteValues.waiting_for_confirm)
     dp.register_callback_query_handler(export, state=ExportStates.waiting_for_fill_empty_values_confirm)

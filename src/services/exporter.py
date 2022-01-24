@@ -37,7 +37,7 @@ class MetricsExporter(Metric):
             missing_df = pd.DataFrame(missing_data, columns=metrics_column_name)
             completed_data = filled_by_user_data.append(missing_df)
             return completed_data
-        # metric_column_names = ['Метрика', 'Значение', 'Дата', 'Комментарий'] # todo: rename column names
+
         return filled_by_user_data
 
     @log_it(logger=default_logger)
