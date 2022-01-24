@@ -3,7 +3,7 @@ from aiogram import Dispatcher
 from handlers.add_value import new_value_to_metric, waiting_for_name_of_metric, AddMetricValue, \
     waiting_for_metric_value_comment, waiting_for_metric_value, add_value
 from handlers.delete_metrics import DeleteValues, confirm_delete_warning, delete_all
-from handlers.export_metrics import export
+from handlers.export_metrics import export, set_export_options, ExportStates
 from handlers.add_metric import new_metric, \
     waiting_for_metric_name, waiting_for_metric_type, AddMetric, waiting_for_fill_empty_values_strategy
 from handlers.get_all_metrics import get_all_metrics
@@ -25,7 +25,8 @@ def register_handlers(dp: Dispatcher):
                                 state=AddMetricValue.waiting_for_metric_value)
     dp.register_message_handler(waiting_for_metric_value_comment,
                                 state=AddMetricValue.waiting_for_metric_value_comment)
-    dp.register_message_handler(export, commands=['export'])
+    dp.register_message_handler(set_export_options, commands=['export'])
     dp.register_message_handler(confirm_delete_warning, commands=['delete_all'])
     dp.register_message_handler(delete_all,
                                 state=DeleteValues.waiting_for_confirm)
+    dp.register_callback_query_handler(export, state=ExportStates.waiting_for_fill_empty_values_confirm)
