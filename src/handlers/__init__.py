@@ -8,6 +8,7 @@ from handlers.add_metric import new_metric, \
     waiting_for_metric_name, waiting_for_metric_type, AddMetric, waiting_for_fill_empty_values_strategy
 from handlers.get_all_metrics import get_all_metrics
 from handlers.info import send_welcome
+from handlers.config_metric import metric_to_config, waiting_for_fill_strategy, waiting_for_strategy_name, ConfigMetric
 
 
 def register_handlers(dp: Dispatcher):
@@ -31,3 +32,6 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(delete_all,
                                 state=DeleteValues.waiting_for_confirm)
     dp.register_callback_query_handler(export, state=ExportStates.waiting_for_fill_empty_values_confirm)
+    dp.register_message_handler(metric_to_config, commands=['config_metrics'], state='*')
+    dp.register_callback_query_handler(waiting_for_strategy_name, state=ConfigMetric.waiting_for_metric_name)
+    dp.register_callback_query_handler(waiting_for_fill_strategy, state=ConfigMetric.waiting_for_fill_strategy)
