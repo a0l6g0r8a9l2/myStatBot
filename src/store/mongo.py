@@ -3,6 +3,7 @@ from typing import List
 import motor.motor_asyncio
 from pymongo.errors import PyMongoError
 
+from handlers.utils import FillMetricValueStrategy
 from src.config import settings
 from utils import default_logger, log_it
 
@@ -31,6 +32,22 @@ class MongodbService:
                 result = await self._collection.insert_one(dto, session=s)
                 default_logger.debug(result.inserted_id)
                 return result.inserted_id
+        except PyMongoError as err:
+            default_logger.error(err.args)
+
+    @log_it(logger=default_logger)
+    async def update_one_by_name(self,
+                                 metric_name: str,
+                                 key: str = 'fill_strategy',
+                                 value: str = FillMetricValueStrategy.MEAN.value):
+        try:
+            async with await self._client.start_session() as s:
+                result = await self._collection.update_one({'name': metric_name}, {'$set': {key: value}}, session=s)
+                default_logger.debug(f'On update: {result.modified_count}')
+                if result.modified_count > 0:
+                    return True
+                else:
+                    return False
         except PyMongoError as err:
             default_logger.error(err.args)
 

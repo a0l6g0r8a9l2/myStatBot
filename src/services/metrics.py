@@ -46,6 +46,22 @@ class Metric:
             default_logger.error(f'Ошибка поиска метрик! {err}')
 
     @log_it(logger=default_logger)
+    async def update_option_by_metric_name(self, metric_name: str, metric_option: str, new_value: str) -> bool:
+        """
+        Обновить параметры метрики по названию (метрики)
+
+        :param new_value: значение параметра для апдейта
+        :param metric_option: параметр для апдейта
+        :param metric_name: имя метрики
+        """
+        result = await self.metric_options_store.update_one_by_name(
+            metric_name=metric_name,
+            key=metric_option,
+            value=new_value
+                                                           )
+        return result
+
+    @log_it(logger=default_logger)
     async def add_metric(self, name: str, hashtag: str, metric_type: str,
                          fill_strategy: str = FillMetricValueStrategy.MEAN.value):
         await self.metric_options_store.create_one({'name': name,
