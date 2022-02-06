@@ -49,15 +49,17 @@ class MetricsExporter(Metric):
         :param metric_values: имеющиеся данные
         """
         metric_info = await self.fetch_metrics_options()
-        for m in metric_info:
-            if m.get('name') == metric_name:
-                if m.get('fill_strategy') == FillMetricValueStrategy.MEAN.name:
-                    return round(float(metric_values.where(metric_values['name'] == metric_name).value.mean()), 2)
-                elif m.get('fill_strategy') == FillMetricValueStrategy.MODE.name:
-                    return round(float(metric_values.where(metric_values['name'] == metric_name).value.mode()[1]), 2) # fixme: KeyError: 1
-
-                else:
-                    return 0
+        try:
+            for m in metric_info:
+                if m.get('name') == metric_name:
+                    if m.get('fill_strategy') == FillMetricValueStrategy.MEAN.name:
+                        return round(float(metric_values.where(metric_values['name'] == metric_name).value.mean()), 2)
+                    elif m.get('fill_strategy') == FillMetricValueStrategy.MODE.name:
+                        return round(float(metric_values.where(metric_values['name'] == metric_name).value.mode()), 2)
+                    else:
+                        return 0
+        except KeyError as err:
+            default_logger.error(f'Error: {err.args}')
 
     @log_it(logger=default_logger)
     async def prepare_missing_data(self, metric_values: pd.DataFrame) -> Optional[list[list]]:
