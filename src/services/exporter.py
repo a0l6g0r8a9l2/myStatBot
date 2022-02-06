@@ -54,7 +54,8 @@ class MetricsExporter(Metric):
                 if m.get('fill_strategy') == FillMetricValueStrategy.MEAN.name:
                     return round(float(metric_values.where(metric_values['name'] == metric_name).value.mean()), 2)
                 elif m.get('fill_strategy') == FillMetricValueStrategy.MODE.name:
-                    return round(float(metric_values.where(metric_values['name'] == metric_name).value.mode()[1]), 2)
+                    return round(float(metric_values.where(metric_values['name'] == metric_name).value.mode()[1]), 2) # fixme: KeyError: 1
+
                 else:
                     return 0
 

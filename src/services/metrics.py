@@ -16,6 +16,10 @@ class Metric:
         self.metric_values_store = MongodbService(collection='user_metric_values')
         self.metric_options_store = MongodbService(collection='user_metrics')
 
+    @staticmethod
+    def hashtag_to_name(hashtag: str):
+        return hashtag.replace('_', ' ')
+
     @log_it(logger=default_logger)
     async def fetch_all(self) -> Optional[list[list]]:
         """
@@ -23,7 +27,7 @@ class Metric:
         """
         user_metrics_values = await self.metric_values_store.find(self.user_id)
         if user_metrics_values:
-            return [[k.get('name'), k.get('value'), k.get('date'), k.get('comment', '-')] for k in
+            return [[k.get('name') or self.hashtag_to_name(k.get('hashtag')), k.get('value'), k.get('date'), k.get('comment', '-')] for k in
                     user_metrics_values]
 
     @log_it(logger=default_logger)
