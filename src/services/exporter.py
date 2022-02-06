@@ -25,7 +25,7 @@ class MetricsExporter(Metric):
         :param metrics: имеющиеся данные
         :param fill_empty_values: признак необходимости заполнения пропущенных данных
         """
-        metrics_column_name = ['name', 'value', 'date', 'comment']
+        metrics_column_name = ['name', 'value', 'date', 'comment', 'fill_strategy']
         filled_by_user_data = pd.DataFrame(metrics, columns=metrics_column_name)
         filled_by_user_data['date'] = pd.to_datetime(filled_by_user_data['date'], unit='ns').dt.date
         filled_by_user_data['value'] = pd.to_numeric(filled_by_user_data['value'], errors='coerce')
@@ -41,7 +41,7 @@ class MetricsExporter(Metric):
         return filled_by_user_data
 
     @log_it(logger=default_logger)
-    async def get_fill_value(self, metric_name: str, metric_values: pd.DataFrame) -> float:
+    async def get_fill_value(self, metric_name: str, metric_values: pd.DataFrame) -> tuple:
         """
         Получить значение для заполнения пропущенных данных по выбранной метрике
 
@@ -53,11 +53,13 @@ class MetricsExporter(Metric):
             for m in metric_info:
                 if m.get('name') == metric_name:
                     if m.get('fill_strategy') == FillMetricValueStrategy.MEAN.name:
-                        return round(float(metric_values.where(metric_values['name'] == metric_name).value.mean()), 2)
+                        return (round(float(metric_values.where(metric_values['name'] == metric_name).value.mean()), 2),
+                                FillMetricValueStrategy.MEAN.name)
                     elif m.get('fill_strategy') == FillMetricValueStrategy.MODE.name:
-                        return round(float(metric_values.where(metric_values['name'] == metric_name).value.mode()), 2)
+                        return (round(float(metric_values.where(metric_values['name'] == metric_name).value.mode()), 2),
+                                FillMetricValueStrategy.MODE.name)
                     else:
-                        return 0
+                        return 0, FillMetricValueStrategy.ZERO.name
         except KeyError as err:
             default_logger.error(f'Error: {err.args}')
 
@@ -83,8 +85,8 @@ class MetricsExporter(Metric):
             date_range_set = set(observed_date.dt.date.unique())
             unique_date_without_metric = date_range_set - unique_date_with_metric
             for date in unique_date_without_metric:
-                value = await self.get_fill_value(name, metric_values)
-                rows_to_add.append([name, value, date, '-'])
+                value, strategy = await self.get_fill_value(name, metric_values)
+                rows_to_add.append([name, value, date, '-', strategy])
         return rows_to_add
 
     @log_it(logger=default_logger)
@@ -94,7 +96,7 @@ class MetricsExporter(Metric):
 
         :param fill_empty_values: признак необходимости заполнения пропущенных данных
         """
-        data = await self.fetch_all()
+        data = await self.fetch_all_values()
         default_logger.debug(f'User metrics data: {data}')
         default_logger.debug(f'Should fill empty data: {fill_empty_values}')
         if not data:

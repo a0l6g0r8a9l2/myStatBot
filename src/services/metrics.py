@@ -21,14 +21,32 @@ class Metric:
         return hashtag.replace('_', ' ')
 
     @log_it(logger=default_logger)
-    async def fetch_all(self) -> Optional[list[list]]:
+    async def fetch_all_values(self) -> Optional[list[list]]:
         """
         Получить все метрики
         """
         user_metrics_values = await self.metric_values_store.find(self.user_id)
         if user_metrics_values:
-            return [[k.get('name') or self.hashtag_to_name(k.get('hashtag')), k.get('value'), k.get('date'), k.get('comment', '-')] for k in
-                    user_metrics_values]
+            options = await self.fetch_metrics_options()
+
+            def fetch_strategy_by_option(hashtag: str, name: Optional[str] = None) -> str:
+                for o in options:
+                    if o.get('hashtag') == hashtag:
+                        return o.get('fill_strategy')
+                    elif o.get('name') == name:
+                        return o.get('fill_strategy')
+
+            values = [
+                [
+                    k.get('name') or self.hashtag_to_name(k.get('hashtag')),
+                    k.get('value'),
+                    k.get('date'),
+                    k.get('comment', '-'),
+                    fetch_strategy_by_option(k.get('hashtag'), k.get('name'))
+                ]
+                for k in user_metrics_values
+            ]
+            return values
 
     @log_it(logger=default_logger)
     async def fetch_values_user_metric(self, metric_name: str) -> Optional[list[str]]:
@@ -62,7 +80,7 @@ class Metric:
             metric_name=metric_name,
             key=metric_option,
             value=new_value
-                                                           )
+        )
         return result
 
     @log_it(logger=default_logger)
