@@ -3,7 +3,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
-from handlers.utils import MetricTypes
+from handlers.utils import MetricTypes, DateOptions, date_option_to_date
 from services.metrics import Metric
 from utils import default_logger, log_it
 
@@ -11,6 +11,7 @@ from utils import default_logger, log_it
 class AddMetricValue(StatesGroup):
     waiting_for_metric_name = State()
     waiting_for_metric_value = State()
+    waiting_for_metric_date = State()
     waiting_for_metric_value_comment = State()
 
 
@@ -100,19 +101,35 @@ async def waiting_for_metric_value(message: types.Message, state: FSMContext):
             await message.answer(f'Значение для метрики с типом <b>{metric_type}</b> должно быть от 1 до 5',
                                  parse_mode='HTML')
         else:
-            actions_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            actions_keyboard.add(KeyboardButton('Закончить'))
+            actions_keyboard = InlineKeyboardMarkup(row_width=3)
+            actions_keyboard.add(*[InlineKeyboardButton(i, callback_data=i) for i in DateOptions.values()])
             await state.update_data(metric_value=message.text)
             await message.answer(f'Ок, значение <b>{message.text}</b>.\n'
-                                 f'Добавь комментарий или нажми <b>"Закончить"</b>',
+                                 f'В какой день учтем значение?',
                                  reply_markup=actions_keyboard,
                                  parse_mode='HTML')
-            await AddMetricValue.waiting_for_metric_value_comment.set()
+            await AddMetricValue.waiting_for_metric_date.set()
     else:
         msg = '<b>Значение должно быть числовым!</b>\n'
         msg += f'- от <b>1 до 5</b>, если метрика {MetricTypes.relative.value}\n'
         msg += f'- <b>неотрицательное число</b>, если метрика {MetricTypes.absolute.value}'
         await message.answer(msg, parse_mode='HTML')
+
+
+@log_it(logger=default_logger)
+async def waiting_for_metric_date(callback_query: types.CallbackQuery, state: FSMContext):
+    if callback_query.data in DateOptions.values():
+        metric_date = date_option_to_date(DateOptions(callback_query.data).name)
+        await state.update_data(metric_data=metric_date)
+        actions_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        actions_keyboard.add(KeyboardButton('Закончить'))
+        await callback_query.message.reply(f'Ок, учтем за <b>{callback_query.data}</b>.\n'
+                                           f'Добавь комментарий или нажми <b>"Закончить"</b>',
+                                           reply_markup=actions_keyboard,
+                                           parse_mode='HTML')
+        await AddMetricValue.waiting_for_metric_value_comment.set()
+    else:
+        await callback_query.answer(f'Указанное значение не поддерживается!')
 
 
 @log_it(logger=default_logger)
@@ -123,6 +140,7 @@ async def waiting_for_metric_value_comment(message: types.Message, state: FSMCon
     await Metric(message.from_user.id).add_value_by_metric(value=metric_data.get('metric_value'),
                                                            hashtag=metric_data.get('metric_name').replace(" ", "_"),
                                                            name=metric_data.get('metric_name'),
-                                                           comment=metric_data.get('comment', '-'))
+                                                           comment=metric_data.get('comment', '-'),
+                                                           metric_data=metric_data.get('metric_data'))
     await message.answer('👍')
     await state.finish()

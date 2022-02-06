@@ -75,14 +75,19 @@ class Metric:
                                                     'user_id': self.user_id})
 
     @log_it(logger=default_logger)
-    async def add_value_by_metric(self, value: str, hashtag: str, name: str, comment: Optional[str] = None):
+    async def add_value_by_metric(self,
+                                  value: str,
+                                  hashtag: str,
+                                  name: str,
+                                  comment: Optional[str] = None,
+                                  metric_data: Optional[str] = datetime.datetime.today().isoformat()):
         await self.metric_values_store.create_one(
             {
                 'value': value,
                 'hashtag': hashtag,
                 'name': name,
                 'user_id': self.user_id,
-                'date': datetime.datetime.today().isoformat(),
+                'date': metric_data,
                 'comment': comment
             }
         )
