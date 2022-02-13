@@ -31,7 +31,7 @@ async def add_value(message: types.Message):
                 comment = None
             metric_type = await Metric(message.from_user.id).fetch_user_metric_type(hashtag.replace('_', ' '))
             default_logger.debug(f'Metric type {metric_type} and message {value}')
-            if (metric_type == MetricTypes.relative.value) and (int(value) > 5):
+            if (metric_type == MetricTypes.RELATIVE.value) and (int(value) > 5):
                 await message.answer(f'Значение для метрики с типом <b>{metric_type}</b> должно быть от 1 до 5',
                                      parse_mode='HTML')
             elif all_user_hashtags and (hashtag in all_user_hashtags):
@@ -72,7 +72,7 @@ async def waiting_for_name_of_metric(callback_query: types.CallbackQuery, state:
         user_metric = Metric(callback_query.from_user.id)
         metric_type = await user_metric.fetch_user_metric_type(callback_query.data)
         user_metrics_values = await user_metric.fetch_values_user_metric(callback_query.data)
-        if metric_type == MetricTypes.relative.value:
+        if metric_type == MetricTypes.RELATIVE.value:
             unique_metrics_values = list(map(str, range(1, 6)))
         else:
             if isinstance(user_metrics_values, list):
@@ -97,7 +97,7 @@ async def waiting_for_metric_value(message: types.Message, state: FSMContext):
     if message.text.isdigit():
         state_data = await state.get_data()
         metric_type = state_data.get('metric_type')
-        if (metric_type == MetricTypes.relative.value) and (int(message.text) > 5):
+        if (metric_type == MetricTypes.RELATIVE.value) and (int(message.text) > 5):
             await message.answer(f'Значение для метрики с типом <b>{metric_type}</b> должно быть от 1 до 5',
                                  parse_mode='HTML')
         else:
@@ -111,8 +111,8 @@ async def waiting_for_metric_value(message: types.Message, state: FSMContext):
             await AddMetricValue.waiting_for_metric_date.set()
     else:
         msg = '<b>Значение должно быть числовым!</b>\n'
-        msg += f'- от <b>1 до 5</b>, если метрика {MetricTypes.relative.value}\n'
-        msg += f'- <b>неотрицательное число</b>, если метрика {MetricTypes.absolute.value}'
+        msg += f'- от <b>1 до 5</b>, если метрика {MetricTypes.RELATIVE.value}\n'
+        msg += f'- <b>неотрицательное число</b>, если метрика {MetricTypes.ABSOLUTE.value}'
         await message.answer(msg, parse_mode='HTML')
 
 

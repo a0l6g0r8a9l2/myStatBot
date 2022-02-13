@@ -23,8 +23,8 @@ class FillMetricValueStrategy(Enum):
 
 
 class MetricTypes(Enum):
-    absolute = 'количественная'
-    relative = 'качественная'
+    ABSOLUTE = 'количественная'
+    RELATIVE = 'качественная'
 
     @staticmethod
     def list():
