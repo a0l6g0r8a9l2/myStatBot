@@ -53,7 +53,8 @@ class MetricsExporter(Metric):
             for m in metric_info:
                 if m.get('name') == metric_name:
                     metric_witch_fill = metric_values.where(metric_values['name'] == metric_name)
-                    default_logger.debug(f'Call get_fill_value.. metric_witch_fill: {type(metric_witch_fill)} {metric_witch_fill}')
+                    default_logger.debug(f'Call get_fill_value.. metric_name: {metric_name}')
+                    default_logger.debug(f'Call get_fill_value.. metric_set: {type(metric_witch_fill)} {metric_witch_fill}')
                     default_logger.debug(f'Call get_fill_value.. value: {type(metric_witch_fill.value)} {metric_witch_fill.value}')
                     if m.get('fill_strategy') == FillMetricValueStrategy.MEAN.name:
                         return (round(float(metric_values.where(metric_values['name'] == metric_name).value.mean()), 2),
