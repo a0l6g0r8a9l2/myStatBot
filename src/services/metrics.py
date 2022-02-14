@@ -29,20 +29,23 @@ class Metric:
         if user_metrics_values:
             options = await self.fetch_metrics_options()
 
-            def fetch_strategy_by_option(hashtag: str, name: Optional[str] = None) -> str:
+            def fetch_strategy_option(hashtag: str,
+                                      option_name: str = 'fill_strategy',
+                                      metric_name: Optional[str] = None) -> str:
                 for o in options:
                     if o.get('hashtag') == hashtag:
-                        return o.get('fill_strategy')
-                    elif o.get('name') == name:
-                        return o.get('fill_strategy')
+                        return o.get(option_name)
+                    elif o.get('metric_name') == metric_name:
+                        return o.get(option_name)
 
             values = [
                 [
-                    k.get('name') or self.hashtag_to_name(k.get('hashtag')),
+                    k.get('metric_name') or self.hashtag_to_name(k.get('hashtag')),
                     k.get('value'),
                     k.get('date'),
+                    fetch_strategy_option(k.get('hashtag'), 'metric_type', k.get('metric_name')),
                     k.get('comment', '-'),
-                    fetch_strategy_by_option(k.get('hashtag'), k.get('name'))
+                    fetch_strategy_option(k.get('hashtag'), 'fill_strategy', k.get('metric_name'))
                 ]
                 for k in user_metrics_values
             ]

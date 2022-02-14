@@ -5,7 +5,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from handlers.utils import FillMetricValueStrategy
+from handlers.utils import FillMetricValueStrategy, MetricTypes
 from services.metrics import Metric
 from services.utils import create_file_path_if_not_exist
 from utils import log_it, default_logger
@@ -25,7 +25,7 @@ class MetricsExporter(Metric):
         :param metrics: имеющиеся данные
         :param fill_empty_values: признак необходимости заполнения пропущенных данных
         """
-        metrics_column_name = ['name', 'value', 'date', 'comment', 'fill_strategy']
+        metrics_column_name = ['name', 'value', 'date', 'type', 'comment', 'fill_strategy']
         filled_by_user_data = pd.DataFrame(metrics, columns=metrics_column_name)
         filled_by_user_data['date'] = pd.to_datetime(filled_by_user_data['date'], unit='ns').dt.date
         filled_by_user_data['value'] = pd.to_numeric(filled_by_user_data['value'], errors='coerce')
@@ -54,12 +54,12 @@ class MetricsExporter(Metric):
                 if m.get('name') == metric_name:
                     if m.get('fill_strategy') == FillMetricValueStrategy.MEAN.name:
                         return (round(float(metric_values.where(metric_values['name'] == metric_name).value.mean()), 2),
-                                FillMetricValueStrategy.MEAN.name)
+                                FillMetricValueStrategy.MEAN.name, MetricTypes(m.get('metric_type')).value)
                     elif m.get('fill_strategy') == FillMetricValueStrategy.MODE.name:
                         return (round(float(metric_values.where(metric_values['name'] == metric_name).value.mode()), 2),
-                                FillMetricValueStrategy.MODE.name)
+                                FillMetricValueStrategy.MODE.name, MetricTypes(m.get('metric_type')).value)
                     else:
-                        return 0, FillMetricValueStrategy.ZERO.name
+                        return 0, FillMetricValueStrategy.ZERO.name, MetricTypes(m.get('metric_type')).value
         except KeyError as err:
             default_logger.error(f'Error: {err.args}')
 
@@ -85,8 +85,8 @@ class MetricsExporter(Metric):
             date_range_set = set(observed_date.dt.date.unique())
             unique_date_without_metric = date_range_set - unique_date_with_metric
             for date in unique_date_without_metric:
-                value, strategy = await self.get_fill_value(name, metric_values)
-                rows_to_add.append([name, value, date, '-', strategy])
+                value, strategy, metric_type = await self.get_fill_value(name, metric_values)
+                rows_to_add.append([name, value, date, metric_type, '-', strategy])
         return rows_to_add
 
     @log_it(logger=default_logger)
