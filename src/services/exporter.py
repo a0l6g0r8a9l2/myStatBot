@@ -52,15 +52,11 @@ class MetricsExporter(Metric):
         try:
             for m in metric_info:
                 if m.get('name') == metric_name:
-                    metric_witch_fill = metric_values.where(metric_values['name'] == metric_name)
-                    default_logger.debug(f'Call get_fill_value.. metric_name: {metric_name}')
-                    default_logger.debug(f'Call get_fill_value.. metric_set: {type(metric_witch_fill)} {metric_witch_fill}')
-                    default_logger.debug(f'Call get_fill_value.. value: {type(metric_witch_fill.value)} {metric_witch_fill.value}')
                     if m.get('fill_strategy') == FillMetricValueStrategy.MEAN.name:
                         return (round(float(metric_values.where(metric_values['name'] == metric_name).value.mean()), 2),
                                 FillMetricValueStrategy.MEAN.name, MetricTypes(m.get('metric_type')).value)
                     elif m.get('fill_strategy') == FillMetricValueStrategy.MODE.name:
-                        return (round(float(metric_values.where(metric_values['name'] == metric_name).value.mode()), 2),
+                        return (round(float(metric_values.where(metric_values['name'] == metric_name).value.mode().iloc[-1]), 2),
                                 FillMetricValueStrategy.MODE.name, MetricTypes(m.get('metric_type')).value)
                     else:
                         return 0, FillMetricValueStrategy.ZERO.name, MetricTypes(m.get('metric_type')).value
