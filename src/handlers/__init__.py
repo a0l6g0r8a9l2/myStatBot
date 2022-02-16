@@ -2,6 +2,7 @@ from aiogram import Dispatcher
 
 from handlers.add_value import new_value_to_metric, waiting_for_name_of_metric, AddMetricValue, \
     waiting_for_metric_value_comment, waiting_for_metric_value, add_value, waiting_for_metric_date
+from handlers.correlation_plot import set_plot_options, export_plot, PlotStates
 from handlers.delete_metrics import DeleteValues, confirm_delete_warning, delete_all
 from handlers.export_metrics import export, set_export_options, ExportStates
 from handlers.add_metric import new_metric, \
@@ -36,3 +37,5 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(metric_to_config, commands=['config_metrics'], state='*')
     dp.register_callback_query_handler(waiting_for_strategy_name, state=ConfigMetric.waiting_for_metric_name)
     dp.register_callback_query_handler(waiting_for_fill_strategy, state=ConfigMetric.waiting_for_fill_strategy)
+    dp.register_message_handler(set_plot_options, commands=['correlation'])
+    dp.register_callback_query_handler(export_plot, state=PlotStates.waiting_for_fill_empty_values_confirm)
