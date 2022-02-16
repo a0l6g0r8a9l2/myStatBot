@@ -56,3 +56,12 @@ def date_option_to_date(value: str) -> Optional[str]:
         'DAY_BEFORE_YESTERDAY': (datetime.datetime.now() - datetime.timedelta(hours=48)).isoformat()
     }
     return enum_date_dict.get(value)
+
+
+class FillEmptyValuesOptions(Enum):
+    FILL = 'Заполнить'
+    RAW = 'Не заполнять'
+
+    @staticmethod
+    def list():
+        return list(map(lambda c: c.value, FillEmptyValuesOptions))

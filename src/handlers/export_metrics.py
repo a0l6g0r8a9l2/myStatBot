@@ -1,11 +1,11 @@
 import datetime
-from enum import Enum
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InputFile, InlineKeyboardMarkup, InlineKeyboardButton
 
+from handlers.utils import FillEmptyValuesOptions
 from services.exporter import MetricsExporter
 from services.utils import remove_file
 from utils import log_it, default_logger
@@ -13,15 +13,6 @@ from utils import log_it, default_logger
 
 class ExportStates(StatesGroup):
     waiting_for_fill_empty_values_confirm = State()
-
-
-class FillEmptyValuesOptions(Enum):
-    FILL = 'Заполнить'
-    RAW = 'Не заполнять'
-
-    @staticmethod
-    def list():
-        return list(map(lambda c: c.value, FillEmptyValuesOptions))
 
 
 @log_it(logger=default_logger)
